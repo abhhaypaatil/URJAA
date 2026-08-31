@@ -34,39 +34,26 @@ Urjaa is a cycle-aware women's wellness web platform that adjusts daily nutritio
 ---
 
 ## Quick Start
-
-### 1. Running with Docker Compose (Full Stack)
-
-```bash
-docker compose up --build
+###1.Go language
 ```
-
-- Frontend: [http://localhost:5173](http://localhost:5173)
-- Backend API: [http://localhost:8080](http://localhost:8080)
-- PostgreSQL: `localhost:5432`
-
----
-
+Download Go language in your device
+https://go.dev/dl/
+```
 ### 2. Local Development
 
 #### Backend (Go)
 ```bash
 cd backend
+go mod tidy
 go run cmd/api/main.go
 ```
-To run tests:
-```bash
-cd backend
-go test ./...
-```
-
 #### Frontend (React + Vite)
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-Open [http://localhost:5173](http://localhost:5173)
+
 
 ---
 
