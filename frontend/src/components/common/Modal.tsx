@@ -48,14 +48,14 @@ export const Modal: React.FC<ModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-cosmic-950/70 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
       {/* Dialog Box */}
       <div
         className={clsx(
-          'relative w-full bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 p-6 z-10 max-h-[90vh] overflow-y-auto transform transition-all',
+          'relative w-full bg-white dark:bg-cosmic-900 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 p-6 z-10 max-h-[90vh] overflow-y-auto transform transition-all',
           maxWidthStyles[maxWidth]
         )}
       >

@@ -3,7 +3,7 @@ import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'flat' | 'outline' | 'rose' | 'sapphire' | 'gradient';
+  variant?: 'default' | 'flat' | 'outline' | 'rose' | 'sapphire' | 'sage' | 'gradient';
   isHoverable?: boolean;
 }
 
@@ -18,21 +18,23 @@ export const Card: React.FC<CardProps> = ({
 
   const variantStyles = {
     default:
-      'bg-white text-slate-800 shadow-soft border border-slate-100/80 dark:bg-slate-900/90 dark:border-slate-800/80 dark:text-slate-100',
+      'bg-white text-slate-800 shadow-soft border border-slate-200/80 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-100',
     flat:
-      'bg-warm-100 text-slate-800 dark:bg-slate-900 dark:text-slate-100',
+      'bg-slate-50/80 text-slate-800 border border-slate-200/60 dark:bg-slate-900/50 dark:border-slate-800/60 dark:text-slate-100',
     outline:
       'bg-transparent border border-slate-200 text-slate-800 dark:border-slate-800 dark:text-slate-100',
     rose:
-      'bg-rose-50/80 border border-rose-100 text-slate-900 dark:bg-rose-950/40 dark:border-rose-900/50 dark:text-rose-100',
+      'bg-rose-50/70 border border-rose-100 text-slate-900 dark:bg-rose-950/20 dark:border-rose-900/40 dark:text-rose-100',
     sapphire:
-      'bg-sapphire-50/80 border border-sapphire-100 text-slate-900 dark:bg-sapphire-950/40 dark:border-sapphire-900/50 dark:text-sapphire-100',
+      'bg-sapphire-50/70 border border-sapphire-100 text-slate-900 dark:bg-sapphire-950/20 dark:border-sapphire-900/40 dark:text-sapphire-100',
+    sage:
+      'bg-sage-50/70 border border-sage-100 text-slate-900 dark:bg-sage-950/20 dark:border-sage-900/40 dark:text-sage-100',
     gradient:
-      'bg-gradient-to-br from-rose-50/90 via-warm-50 to-sapphire-50/80 border border-rose-100/50 shadow-soft dark:from-slate-900 dark:via-rose-950/20 dark:to-sapphire-950/20 dark:border-slate-800',
+      'bg-gradient-to-br from-white via-rose-50/30 to-slate-50 border border-rose-100/60 shadow-soft dark:from-slate-900 dark:via-slate-900 dark:to-rose-950/20 dark:border-slate-800',
   };
 
   const hoverStyles = isHoverable
-    ? 'hover:shadow-soft-lg hover:-translate-y-0.5 cursor-pointer'
+    ? 'hover:shadow-card-hover hover:-translate-y-0.5 cursor-pointer'
     : '';
 
   return (

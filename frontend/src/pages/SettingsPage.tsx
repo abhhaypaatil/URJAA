@@ -2,14 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 import {
   Settings,
   Bell,
   Sun,
   Moon,
-  VolumeX,
+  Sparkles,
   Shield,
   CheckCircle2,
 } from 'lucide-react';
@@ -78,152 +77,155 @@ export const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in duration-300">
       {/* Top Header */}
-      <div>
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400">
-          <Settings className="w-3.5 h-3.5" />
-          <span>App Customization</span>
+      <div className="pb-2 border-b border-slate-200 dark:border-slate-800">
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">
+          <Settings className="w-4 h-4 text-sapphire-600 dark:text-sapphire-400" />
+          <span className="uppercase tracking-wider font-mono text-[11px]">Preferences & Health Modes</span>
         </div>
-        <h1 className="text-2xl font-serif font-bold text-slate-900 dark:text-white mt-0.5">
-          Settings & Notifications
+        <h1 className="text-2xl sm:text-3xl font-serif font-bold text-slate-900 dark:text-white tracking-tight">
+          Application Settings
         </h1>
+        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Customize your appearance theme, PCOS accommodations, apartment-friendly workouts, and notification schedules.
+        </p>
       </div>
 
       {isSaved && (
-        <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-900 text-xs text-emerald-700 dark:text-emerald-300">
-          Settings updated successfully!
+        <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          <span>Settings saved successfully!</span>
         </div>
       )}
 
-      {/* 1. Theme Selection (§12) */}
-      <Card>
-        <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1">
-          Visual Theme
-        </h4>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-          Choose light, dark, or sync automatically with your system settings.
-        </p>
-
-        <div className="grid grid-cols-3 gap-2">
+      {/* 1. Theme Selection */}
+      <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-sm">
+        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+          Appearance & Theme
+        </label>
+        <div className="grid grid-cols-3 gap-3">
           {[
             { id: 'light', label: 'Light Mode', icon: Sun },
             { id: 'dark', label: 'Dark Mode', icon: Moon },
-            { id: 'system', label: 'System', icon: Settings },
+            { id: 'system', label: 'System Default', icon: Sparkles },
           ].map((t) => {
             const Icon = t.icon;
-            const isSelected = theme === t.id;
             return (
               <button
                 key={t.id}
                 type="button"
                 onClick={() => setTheme(t.id as any)}
-                className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-xs font-semibold transition-all ${
-                  isSelected
-                    ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300'
-                    : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                className={`py-3 px-3 rounded-2xl text-xs font-semibold flex flex-col items-center gap-2 transition-all ${
+                  theme === t.id
+                    ? 'border-slate-900 bg-slate-900 text-white dark:border-rose-500 dark:bg-rose-600 dark:text-white shadow-sm'
+                    : 'border-slate-200 dark:border-slate-800 bg-warm-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
                 }`}
               >
-                <Icon className="w-4 h-4 mb-1.5" />
+                <Icon className="w-4 h-4" />
                 <span>{t.label}</span>
               </button>
             );
           })}
         </div>
-      </Card>
+      </div>
 
-      {/* 2. PCOS / PCOD Support Mode (§9) */}
-      <Card className="border-rose-200 dark:border-rose-900/60 bg-rose-50/40 dark:bg-rose-950/20">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-2.5">
-            <Shield className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
-            <div>
-              <h4 className="text-sm font-bold text-slate-900 dark:text-white">
-                PCOS / PCOD Support Mode
-              </h4>
-              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
-                Modifies workout volume toward consistent strength, mindful walks, and anti-inflammatory whole-food nutrition.
-              </p>
-              <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-2 font-medium">
-                {MEDICAL_DISCLAIMER}
-              </p>
+      {/* 2. PCOS / PCOD Mode */}
+      <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-sm">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-slate-900 dark:text-white">PCOS / PCOD Support Mode</span>
+              <span className="px-2 py-0.5 rounded-full bg-rose-100 text-[10px] text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 font-semibold">
+                Gentle Protocol
+              </span>
             </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+              Prioritizes low-cortisol exercise formats, steady resistance training, and low-glycemic, anti-inflammatory meal choices.
+            </p>
           </div>
-          <input
-            type="checkbox"
-            checked={pcosMode}
-            onChange={(e) => setPcosMode(e.target.checked)}
-            className="w-5 h-5 rounded-md text-rose-600 focus:ring-rose-500 mt-1 cursor-pointer"
-          />
-        </div>
-      </Card>
 
-      {/* 3. Quiet Workout Mode (§8.8) */}
-      <Card>
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-2.5">
-            <VolumeX className="w-5 h-5 text-sapphire-600 shrink-0 mt-0.5" />
-            <div>
-              <h4 className="text-sm font-bold text-slate-900 dark:text-white">
-                Default Quiet Workout Mode
-              </h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Automatically prioritize zero-jumping, apartment-friendly workouts across all recommendations.
-              </p>
+          <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+            <input
+              type="checkbox"
+              checked={pcosMode}
+              onChange={(e) => setPcosMode(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-600" />
+          </label>
+        </div>
+      </div>
+
+      {/* 3. Quiet Friendly Workouts */}
+      <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-sm">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-slate-900 dark:text-white">Quiet Mode Default</span>
+              <span className="px-2 py-0.5 rounded-full bg-sapphire-100 text-[10px] text-sapphire-700 dark:bg-sapphire-950/60 dark:text-sapphire-300 font-semibold">
+                No Jumping
+              </span>
             </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+              Automatically selects exercises without jumping or loud floor impacts, ideal for apartments or late-evening workouts.
+            </p>
           </div>
-          <input
-            type="checkbox"
-            checked={quietMode}
-            onChange={(e) => setQuietMode(e.target.checked)}
-            className="w-5 h-5 rounded-md text-sapphire-600 focus:ring-sapphire-500 mt-1 cursor-pointer"
-          />
-        </div>
-      </Card>
 
-      {/* 4. Notification Preferences (§18) */}
-      <Card>
-        <div className="flex items-center gap-2 mb-2">
-          <Bell className="w-4 h-4 text-slate-500" />
-          <h4 className="text-sm font-bold text-slate-900 dark:text-white">
-            Gentle Reminders
-          </h4>
+          <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+            <input
+              type="checkbox"
+              checked={quietMode}
+              onChange={(e) => setQuietMode(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sapphire-600" />
+          </label>
         </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-          Each notification channel can be toggled independently without spam.
-        </p>
+      </div>
 
-        <div className="space-y-3 divide-y divide-slate-100 dark:divide-slate-800">
-          {[
-            { label: 'Period & Phase Forecast Reminders', checked: notifyPeriod, set: setNotifyPeriod },
-            { label: 'Daily 20s Check-in Prompt', checked: notifyCheckin, set: setNotifyCheckin },
-            { label: 'Hydration Gentle Nudges', checked: notifyHydration, set: setNotifyHydration },
-            { label: 'Workout Rhythm Reminders', checked: notifyWorkout, set: setNotifyWorkout },
-            { label: 'Meal & Nutrition Timing Focus', checked: notifyNutrition, set: setNotifyNutrition },
-            { label: 'Weekly Wellness Recap & Insights', checked: notifyInsights, set: setNotifyInsights },
-          ].map((item, idx) => (
-            <div key={idx} className="flex items-center justify-between pt-2.5 text-xs">
-              <span className="text-slate-700 dark:text-slate-300">{item.label}</span>
-              <input
-                type="checkbox"
-                checked={item.checked}
-                onChange={(e) => item.set(e.target.checked)}
-                className="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 cursor-pointer"
-              />
-            </div>
-          ))}
+      {/* 4. Notification Preferences */}
+      <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-sm space-y-3">
+        <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-sm mb-1">
+          <Bell className="w-4 h-4 text-rose-500" />
+          <span>Notifications & Daily Reminders</span>
         </div>
-      </Card>
 
+        {[
+          { label: 'Upcoming Cycle & Period Notice', checked: notifyPeriod, setter: setNotifyPeriod },
+          { label: 'Daily 20-Second Check-in Reminder', checked: notifyCheckin, setter: setNotifyCheckin },
+          { label: 'Gentle Hydration Prompts', checked: notifyHydration, setter: setNotifyHydration },
+          { label: 'Today’s Workout Movement Suggestion', checked: notifyWorkout, setter: setNotifyWorkout },
+          { label: 'Meal & Nutrition Recipe Ideas', checked: notifyNutrition, setter: setNotifyNutrition },
+          { label: 'Weekly Rhythm & Health Insights', checked: notifyInsights, setter: setNotifyInsights },
+        ].map((item, idx) => (
+          <div key={idx} className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800 last:border-0 text-xs">
+            <span className="text-slate-700 dark:text-slate-300 font-medium">{item.label}</span>
+            <input
+              type="checkbox"
+              checked={item.checked}
+              onChange={(e) => item.setter(e.target.checked)}
+              className="w-4 h-4 rounded text-rose-600 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 focus:ring-rose-500"
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Save Button */}
       <Button
-        variant="rose"
+        variant="primary"
         size="lg"
-        className="w-full"
-        isLoading={isLoading}
         onClick={handleSave}
+        disabled={isLoading}
+        className="w-full shadow-sm py-3"
       >
-        Save Settings
+        {isLoading ? 'Saving...' : 'Save Settings'}
       </Button>
+
+      {/* Disclaimer */}
+      <p className="text-[10px] text-slate-400 text-center leading-relaxed mt-4 max-w-xl mx-auto">
+        {MEDICAL_DISCLAIMER}
+      </p>
     </div>
   );
 };

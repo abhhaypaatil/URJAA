@@ -1,19 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api/client';
-import { RecommendedMeal, Meal, PhaseType } from '../types';
+import { RecommendedMeal, Meal, PhaseType, DietaryPreference } from '../types';
 import { MealCard } from '../components/nutrition/MealCard';
 import { SubstitutionModal } from '../components/nutrition/SubstitutionModal';
 import { Card } from '../components/common/Card';
 import { ProgressBar } from '../components/common/ProgressBar';
 import { Skeleton } from '../components/common/Skeleton';
 import { ErrorState } from '../components/common/ErrorState';
-import { UtensilsCrossed, Sparkles, CheckCircle2 } from 'lucide-react';
-import { MEDICAL_DISCLAIMER } from '../constants';
+import {
+  UtensilsCrossed,
+  Sparkles,
+  CheckCircle2,
+  Clock,
+  Leaf,
+  Apple,
+  Info,
+  Layers,
+} from 'lucide-react';
+import { MEDICAL_DISCLAIMER, DIETARY_PREFERENCES } from '../constants';
 
 export const NutritionPage: React.FC = () => {
   const [meals, setMeals] = useState<RecommendedMeal[]>([]);
-  const [phase, setPhase] = useState<PhaseType>('Menstrual');
-  const [dietPref, setDietPref] = useState<string>('Vegetarian');
+  const [phase, setPhase] = useState<PhaseType>('Follicular');
+  const [dietPref, setDietPref] = useState<DietaryPreference>('Vegetarian');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,7 +34,7 @@ export const NutritionPage: React.FC = () => {
     try {
       const data = await api.getTodayNutrition();
       setMeals(data.meals || []);
-      setPhase(data.phase || 'Menstrual');
+      setPhase(data.phase_target || data.phase || 'Follicular');
       setDietPref(data.dietary_preference || 'Vegetarian');
     } catch (err: any) {
       console.error('Failed to load nutrition data', err);
@@ -73,69 +82,98 @@ export const NutritionPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+    <div className="space-y-8 animate-in fade-in duration-200">
+      {/* Header: Food & Nutrition Identity */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-sage-600 dark:text-sage-400">
-            <UtensilsCrossed className="w-3.5 h-3.5" />
-            <span>Cycle-Aware Nourishment</span>
+          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400 mb-1">
+            <Leaf className="w-4 h-4 text-emerald-600" />
+            <span className="uppercase tracking-widest text-[10px]">Cycle-Aware Nourishment</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-slate-900 dark:text-white mt-0.5">
-            Today's Nutrition Plan
+          <h1 className="text-3xl font-serif font-bold text-slate-900 dark:text-white tracking-tight">
+            Nourish Your Rhythm
           </h1>
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
+            Whole-food meals calibrated to support liver estrogen clearance, steady blood sugar, and sustained vitality.
+          </p>
         </div>
 
-        <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-sage-50 text-sage-700 dark:bg-sage-950/60 dark:text-sage-300 border border-sage-200 dark:border-sage-900 w-fit">
-          {dietPref} • {phase} Phase
-        </span>
+        {/* Dietary preference badge */}
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-sage-50 dark:bg-sage-950/40 border border-sage-200/80 dark:border-sage-900/60 text-xs font-semibold text-sage-800 dark:text-sage-200 shadow-subtle w-fit">
+          <UtensilsCrossed className="w-3.5 h-3.5 text-sage-600" />
+          <span>{dietPref} • {phase} Phase Plan</span>
+        </div>
       </div>
 
-      {/* Progress & Adherence Card */}
-      <Card variant="flat" className="p-5 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-soft">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-sage-600" />
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-              Daily Meal Coverage
-            </span>
+      {/* Daily Progress & Macronutrient Composition Banner */}
+      <div className="bg-white dark:bg-slate-900 p-6 sm:p-7 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-soft">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2.5">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+            <div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                Daily Meal Adherence
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {completedCount} of {meals.length} meals enjoyed today ({progressPercent}%)
+              </p>
+            </div>
           </div>
-          <span className="text-xs font-bold text-sage-600 dark:text-sage-400">
-            {completedCount} of {meals.length} Meals Followed ({progressPercent}%)
+
+          <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-900/60 w-fit">
+            {progressPercent === 100 ? 'All Meals Complete' : `${progressPercent}% On Track`}
           </span>
         </div>
-        <ProgressBar progress={progressPercent} colorClass="bg-sage-600" height="h-2.5" />
-        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2">
-          No calorie counting — focus on nutrient quality, fiber, protein, and gentle hydration.
-        </p>
-      </Card>
 
-      {/* Meals Grid (4 Slots: Breakfast, Lunch, Snack, Dinner) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {meals.map((item) => (
-          <MealCard
-            key={item.meal.id}
-            meal={item.meal}
-            completed={item.completed}
-            onToggleComplete={() => handleToggleMeal(item.meal.id)}
-            onOpenSubstitute={() => setSubstituteMeal(item.meal)}
-          />
-        ))}
+        <ProgressBar progress={progressPercent} colorClass="bg-emerald-600" height="h-2.5" />
+
+        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-medium">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span>No Calorie Counting</span>
+            </span>
+            <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-medium">
+              <span className="w-2 h-2 rounded-full bg-amber-500" />
+              <span>1-Tap Clean Ingredient Swaps</span>
+            </span>
+          </div>
+          <span className="text-[11px] font-mono text-slate-400">
+            Phase Target: High Folate, Zinc & Prebiotics
+          </span>
+        </div>
       </div>
 
-      {/* Philosophy & Disclaimer Footer */}
-      <Card className="p-4 bg-warm-50/60 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-        <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200 mb-1">
-          <Sparkles className="w-4 h-4 text-rose-500" />
-          <span>Practical & Respectful Nutrition</span>
+      {/* 4 Meals Grid (Breakfast, Lunch, Snack, Dinner) */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Today's Meal Course</h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {meals.map((item) => (
+            <MealCard
+              key={item.meal.id}
+              meal={item.meal}
+              completed={item.completed}
+              onToggleComplete={() => handleToggleMeal(item.meal.id)}
+              onOpenSubstitute={() => setSubstituteMeal(item.meal)}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Nutritional Guidance Philosophy Card */}
+      <div className="p-5 sm:p-6 rounded-3xl bg-amber-50/60 dark:bg-slate-900/60 border border-amber-200/60 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 leading-relaxed shadow-subtle">
+        <div className="flex items-center gap-2 font-bold text-amber-900 dark:text-amber-200 mb-1.5">
+          <Sparkles className="w-4 h-4 text-amber-600" />
+          <span>Practical, Respectful Nutrition Philosophy</span>
         </div>
         <p>
-          Urjaa provides practical sources of protein, complex carbs, iron, and healthy fats tailored to your hormonal cycle phase. Conflicting foods are never recommended.
+          Urjaa recommends bioavailable sources of complete protein, low-glycemic complex carbohydrates, gentle dietary fiber, and healthy omega fats tailored to your hormonal cycle phase. We do not promote restrictive dieting or extreme fasting during progesterone rise.
         </p>
-        <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-2">
+        <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-2">
           {MEDICAL_DISCLAIMER}
         </p>
-      </Card>
+      </div>
 
       {/* Substitution Modal */}
       <SubstitutionModal
