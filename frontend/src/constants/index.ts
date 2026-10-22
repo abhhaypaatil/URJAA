@@ -122,3 +122,20 @@ export const DIETARY_PREFERENCES = [
 ];
 
 export const DURATION_OPTIONS = [5, 10, 15, 20, 30, 45];
+
+
+export const FITNESS_GOALS = [
+  { id: 'Build strength', label: 'Build strength', desc: 'Tone muscles, improve bone density and functional strength' },
+  { id: 'Improve stamina and cardiovascular fitness', label: 'Improve stamina & cardiovascular fitness', desc: 'Boost endurance, heart health and vital stamina' },
+  { id: 'Improve flexibility and mobility', label: 'Improve flexibility & mobility', desc: 'Enhance range of motion, ease joint stiffness and posture' },
+  { id: 'Stress relief and relaxation', label: 'Stress relief & relaxation', desc: 'Calm the nervous system and release hormonal tension' },
+  { id: 'General fitness', label: 'General fitness & vitality', desc: 'Balanced, approachable everyday movement for total well-being' },
+  { id: 'Build a consistent exercise routine', label: 'Build a consistent routine', desc: 'Form sustainable habits with approachable daily micro-sessions' },
+  { id: 'Mindful body composition & weight balance', label: 'Mindful weight & metabolic balance', desc: 'Support hormonal health and sustainable energy without restriction' },
+];
+
+export const WORKOUT_LOCATIONS = ['Home', 'Gym', 'Outdoors', 'Traveling / Apartment'];
+
+export const AVAILABLE_EQUIPMENT = ['None (Bodyweight)', 'Yoga Mat', 'Resistance Bands', 'Light Dumbbells', 'Chair'];
+
+export const PREFERRED_ACTIVITIES = ['Low-Impact Cardio', 'Strength Training', 'Yoga & Mobility', 'Pelvic Release & Stretches'];

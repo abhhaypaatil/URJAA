@@ -51,9 +51,17 @@ type User struct {
 type UserProfile struct {
 	UserID                   string    `json:"user_id"`
 	Name                     string    `json:"name"`
+	AvatarID                 string    `json:"avatar_id,omitempty"`
+	AvatarURL                string    `json:"avatar_url,omitempty"`
+	CompanionName            string    `json:"companion_name,omitempty"`
 	WellnessGoal             string    `json:"wellness_goal"`
+	PrimaryGoal              string    `json:"primary_goal,omitempty"`
+	SecondaryGoals           []string  `json:"secondary_goals,omitempty"`
 	FitnessLevel             string    `json:"fitness_level"`
 	PreferredWorkoutDuration int       `json:"preferred_workout_duration"`
+	WorkoutLocation          string    `json:"workout_location,omitempty"`
+	AvailableEquipment       []string  `json:"available_equipment,omitempty"`
+	PreferredActivities      []string  `json:"preferred_activities,omitempty"`
 	DietaryPreference        string    `json:"dietary_preference"`
 	ExerciseLimitations      []string  `json:"exercise_limitations"`
 	PCOSPCODMode             bool      `json:"pcos_pcod_mode"`
@@ -64,6 +72,7 @@ type UserPreferences struct {
 	UserID          string    `json:"user_id"`
 	ThemePreference string    `json:"theme_preference"` // light, dark, system
 	QuietMode       bool      `json:"quiet_mode"`
+	CompanionName   string    `json:"companion_name,omitempty"`
 	NotifyPeriod    bool      `json:"notify_period"`
 	NotifyCheckin   bool      `json:"notify_checkin"`
 	NotifyHydration bool      `json:"notify_hydration"`
@@ -75,11 +84,11 @@ type UserPreferences struct {
 
 // Cycle Models
 type CycleSettings struct {
-	UserID         string    `json:"user_id"`
-	LastPeriodStart string   `json:"last_period_start"` // YYYY-MM-DD
-	PeriodDuration  int      `json:"period_duration"`
-	AvgCycleLength  int      `json:"avg_cycle_length"`
-	IsRegular       bool     `json:"is_regular"`
+	UserID          string    `json:"user_id"`
+	LastPeriodStart string    `json:"last_period_start"` // YYYY-MM-DD
+	PeriodDuration  int       `json:"period_duration"`
+	AvgCycleLength  int       `json:"avg_cycle_length"`
+	IsRegular       bool      `json:"is_regular"`
 	UpdatedAt       time.Time `json:"updated_at"`
 }
 
@@ -110,6 +119,36 @@ type DailyCheckin struct {
 	Notes              string    `json:"notes,omitempty"`
 	CreatedAt          time.Time `json:"created_at"`
 	UpdatedAt          time.Time `json:"updated_at"`
+}
+
+// Gamification Models (Stage 5)
+type Quest struct {
+	ID          string `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Category    string `json:"category"` // movement, strength, flexibility, mindfulness, nutrition, hydration
+	Difficulty  string `json:"difficulty"` // Beginner, Intermediate, Advanced
+	DurationMin int    `json:"duration_min"`
+	XPReward    int    `json:"xp_reward"`
+	Completed   bool   `json:"completed"`
+	CompletedAt string `json:"completed_at,omitempty"`
+	ActionLabel string `json:"action_label"`
+	ActionRoute string `json:"action_route,omitempty"`
+	ExerciseID  string `json:"exercise_id,omitempty"`
+	MealID      string `json:"meal_id,omitempty"`
+	AssetKey    string `json:"asset_key,omitempty"`
+}
+
+type GamificationState struct {
+	UserID         string   `json:"user_id"`
+	Level          int      `json:"level"`
+	LevelTitle     string   `json:"level_title"`
+	CurrentXP      int      `json:"current_xp"`
+	XPForNextLevel int      `json:"xp_for_next_level"`
+	TotalXPEarned  int      `json:"total_xp_earned"`
+	StreakDays     int      `json:"streak_days"`
+	Quests         []*Quest `json:"quests"`
+	LastActiveDate string   `json:"last_active_date"`
 }
 
 // Medical & Wellness Disclaimer Constant (Single source of truth per §9)

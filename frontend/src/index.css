@@ -9,7 +9,7 @@
   }
 
   body {
-    @apply antialiased bg-warm-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 selection:bg-rose-500/20 selection:text-rose-900;
+    @apply antialiased bg-ivory-50 text-plum-950 dark:bg-slate-950 dark:text-slate-100 selection:bg-blush-200 selection:text-plum-950;
   }
 
   /* Clean, subtle modern scrollbar */
@@ -21,25 +21,25 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgba(148, 163, 184, 0.35);
+    background: rgba(137, 92, 140, 0.25);
     border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(100, 116, 139, 0.55);
+    background: rgba(137, 92, 140, 0.45);
   }
 }
 
-/* Semi-Professional Lifestyle Surface Primitives */
+/* Premium Wellness Surface Primitives */
 .lifestyle-card {
-  @apply bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl shadow-soft transition-all duration-200;
+  @apply bg-white/95 dark:bg-slate-900 border border-plum-100/70 dark:border-slate-800/80 rounded-3xl shadow-soft transition-all duration-200;
 }
 
 .lifestyle-card:hover {
-  @apply shadow-card-hover border-slate-300/80 dark:border-slate-700/80;
+  @apply shadow-card-hover border-blush-200/80 dark:border-slate-700/80;
 }
 
 .lifestyle-card-flat {
-  @apply bg-slate-50/80 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800/60 rounded-3xl;
+  @apply bg-ivory-100/70 dark:bg-slate-900/50 border border-plum-100/50 dark:border-slate-800/60 rounded-3xl;
 }
 
 /* Custom Workout SVG Keyframe Animations (Guided Movement Engine) */

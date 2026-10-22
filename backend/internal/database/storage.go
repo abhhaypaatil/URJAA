@@ -26,7 +26,9 @@ type MemoryStorage struct {
 	Meals         map[string]*MealRecord
 	Workouts      map[string]*WorkoutRecord
 	Sessions      map[string][]*WorkoutSessionRecord
-	MealLogs      map[string]map[string]bool // userID -> (date_mealID -> bool)
+	MealLogs           map[string]map[string]bool // userID -> (date_mealID -> bool)
+	GamificationStates map[string]*models.GamificationState // userID -> state
+	QuestCompletions   map[string]map[string]bool // userID -> (date_questID -> bool)
 }
 
 type ExerciseRecord struct {
@@ -125,7 +127,9 @@ func NewMemoryStorage() *MemoryStorage {
 		Meals:         make(map[string]*MealRecord),
 		Workouts:      make(map[string]*WorkoutRecord),
 		Sessions:      make(map[string][]*WorkoutSessionRecord),
-		MealLogs:      make(map[string]map[string]bool),
+		MealLogs:           make(map[string]map[string]bool),
+		GamificationStates: make(map[string]*models.GamificationState),
+		QuestCompletions:   make(map[string]map[string]bool),
 	}
 }
 

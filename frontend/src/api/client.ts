@@ -43,7 +43,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
       const errorCode = data.error?.code || `HTTP_${response.status}`;
 
       if (response.status === 401 && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/register')) {
-        if (token && token !== 'demo-local-access-token') {
+        if (token) {
           localStorage.removeItem('urjaa_access_token');
           localStorage.removeItem('urjaa_refresh_token');
           window.dispatchEvent(new Event('urjaa_logout'));
@@ -77,39 +77,13 @@ async function resilientRequest<T>(
 export const api = {
   // Auth
   register: (body: any) =>
-    request<any>('/auth/register', { method: 'POST', body: JSON.stringify(body) }).catch(() => {
-      // Local fallback registration
-      const user = { ...DEMO_USER, email: body.email };
-      const profile = { ...DEMO_PROFILE, name: body.name || 'Voyager' };
-      return {
-        access_token: 'demo-local-access-token',
-        refresh_token: 'demo-local-refresh-token',
-        user,
-        profile,
-        has_settings: true,
-      };
-    }),
+    request<any>('/auth/register', { method: 'POST', body: JSON.stringify(body) }),
 
   login: (body: any) =>
-    request<any>('/auth/login', { method: 'POST', body: JSON.stringify(body) }).catch(() => {
-      // Local fallback login
-      return {
-        access_token: 'demo-local-access-token',
-        refresh_token: 'demo-local-refresh-token',
-        user: DEMO_USER,
-        profile: DEMO_PROFILE,
-        preferences: DEMO_PREFERENCES,
-        has_settings: true,
-      };
-    }),
+    request<any>('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
 
   getMe: () =>
-    resilientRequest<any>('/auth/me', undefined, () => ({
-      user: DEMO_USER,
-      profile: DEMO_PROFILE,
-      preferences: DEMO_PREFERENCES,
-      has_settings: true,
-    })),
+    request<any>('/auth/me'),
 
   logout: () =>
     request<any>('/auth/logout', { method: 'POST' }).catch(() => {
@@ -118,45 +92,33 @@ export const api = {
 
   // Profile & Onboarding
   completeOnboarding: (body: any) =>
-    request<any>('/onboarding', { method: 'POST', body: JSON.stringify(body) }).catch(() => {
-      return { success: true };
-    }),
+    request<any>('/onboarding', { method: 'POST', body: JSON.stringify(body) }),
 
   getProfile: () =>
-    resilientRequest<any>('/profile', undefined, () => ({
-      profile: DEMO_PROFILE,
-      preferences: DEMO_PREFERENCES,
-    })),
+    request<any>('/profile'),
 
   updateProfile: (body: any) =>
-    request<any>('/profile', { method: 'PUT', body: JSON.stringify(body) }).catch(() => {
-      return { profile: { ...DEMO_PROFILE, ...body } };
-    }),
+    request<any>('/profile', { method: 'PUT', body: JSON.stringify(body) }),
 
   exportData: () =>
-    resilientRequest<any>('/profile/export', undefined, () => ({
-      export_date: new Date().toISOString(),
-      user: DEMO_USER,
-      profile: DEMO_PROFILE,
-      cycle_history: [],
-      checkins: [DEMO_CHECKIN],
-    })),
+    request<any>('/profile/export'),
 
   deleteAccount: () =>
-    request<any>('/profile', { method: 'DELETE' }).catch(() => {
-      return { success: true };
-    }),
+    request<any>('/profile', { method: 'DELETE' }),
 
   // Settings
   getSettings: () =>
-    resilientRequest<any>('/settings', undefined, () => ({
-      preferences: DEMO_PREFERENCES,
-    })),
+    request<any>('/settings'),
 
   updateSettings: (body: any) =>
-    request<any>('/settings', { method: 'PUT', body: JSON.stringify(body) }).catch(() => {
-      return { preferences: { ...DEMO_PREFERENCES, ...body } };
-    }),
+    request<any>('/settings', { method: 'PUT', body: JSON.stringify(body) }),
+
+  // Gamification (Stage 5)
+  getGamification: () =>
+    request<any>('/gamification'),
+
+  completeQuest: (questId: string) =>
+    request<any>(`/gamification/quests/${questId}/complete`, { method: 'POST' }),
 
   // Cycle
   getCurrentCycle: () =>
