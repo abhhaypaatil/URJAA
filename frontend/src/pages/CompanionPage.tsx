@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAvatar } from '../context/AvatarContext';
+import { api } from '../api/client';
 import {
   Sparkles,
   Send,
@@ -12,7 +13,7 @@ import {
   ArrowRight,
   Zap,
 } from 'lucide-react';
-import { CompanionMessage } from '../types';
+import { CompanionMessage, PhaseType } from '../types';
 import { AICompanionService } from '../services/aiCompanionService';
 
 export const CompanionPage: React.FC = () => {
@@ -20,16 +21,23 @@ export const CompanionPage: React.FC = () => {
   const { profile } = useAuth();
   const { avatar } = useAvatar();
 
+  const companionName = profile?.companion_name || 'Aura';
+  const userName = profile?.name || 'Friend';
+
+  const [currentPhase, setCurrentPhase] = useState<PhaseType>('Follicular');
+  const [cycleDay, setCycleDay] = useState<number>(9);
+  const [energyLevel, setEnergyLevel] = useState<string>('Balanced');
+
   const [messages, setMessages] = useState<CompanionMessage[]>([
     {
       id: 'cp-init',
       sender: 'companion',
-      text: `Hello ${profile?.name || 'there'}! I'm Aura, your wellness assistant. You're currently on **Day 9 of your Follicular Phase**, with rising estrogen and higher energy. How can I support your movement, meals, or rest today?`,
+      text: `Hello ${userName}! I'm ${companionName}, your wellness companion attuned to your biological rhythm. How can I support your movement, Indian meal nourishment, or recovery today?`,
       timestamp: 'Just now',
       suggestedActions: [
-        { label: 'Explain Follicular Phase', actionKey: 'phase' },
+        { label: 'Explain Today’s Phase', actionKey: 'phase' },
         { label: 'Today’s Workout', route: '/workout' },
-        { label: 'Meal Ideas', route: '/nutrition' },
+        { label: 'Indian Meal Ideas', route: '/nutrition' },
         { label: 'Daily Check-in', route: '/check-in' },
       ],
       phaseContext: 'Follicular',
@@ -40,7 +48,26 @@ export const CompanionPage: React.FC = () => {
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  const suggestedPrompts = AICompanionService.getSuggestedPrompts('Follicular');
+  useEffect(() => {
+    const fetchContext = async () => {
+      try {
+        const cycleData = await api.getCurrentCycle().catch(() => null);
+        if (cycleData?.phase_info) {
+          setCurrentPhase(cycleData.phase_info.current_phase);
+          setCycleDay(cycleData.phase_info.cycle_day);
+        }
+        const checkinData = await api.getTodayCheckin().catch(() => null);
+        if (checkinData?.checkin?.energy) {
+          setEnergyLevel(checkinData.checkin.energy);
+        }
+      } catch (err) {
+        console.warn('Could not load companion context', err);
+      }
+    };
+    fetchContext();
+  }, []);
+
+  const suggestedPrompts = AICompanionService.getSuggestedPrompts(currentPhase);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -65,10 +92,13 @@ export const CompanionPage: React.FC = () => {
 
     try {
       const response = await AICompanionService.query(text, {
-        userName: profile?.name || 'there',
-        phase: 'Follicular',
-        cycleDay: 9,
-        energyLevel: 'High',
+        userName,
+        companionName,
+        phase: currentPhase,
+        cycleDay,
+        energyLevel,
+        primaryGoal: profile?.primary_goal || profile?.wellness_goal,
+        dietaryPreference: profile?.dietary_preference,
       });
       setMessages((prev) => [...prev, response]);
     } catch (e) {
@@ -82,7 +112,7 @@ export const CompanionPage: React.FC = () => {
     if (action.route) {
       navigate(action.route);
     } else if (action.actionKey === 'phase') {
-      handleSendMessage('Explain what happens in my Follicular phase');
+      handleSendMessage(`Explain what happens in my ${currentPhase} phase`);
     }
   };
 
@@ -92,21 +122,21 @@ export const CompanionPage: React.FC = () => {
       <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-warm-50/70 dark:bg-slate-900 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="w-10 h-10 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center">
-              <Sparkles className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold">
+              {companionName.charAt(0).toUpperCase()}
             </div>
             <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900" />
           </div>
 
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-base font-bold text-slate-900 dark:text-white">Aura &bull; Wellness Assistant</h2>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">{companionName} &bull; Wellness Assistant</h2>
               <span className="px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/60 text-[10px] font-semibold text-rose-700 dark:text-rose-300">
-                Follicular Day 9
+                {currentPhase} Day {cycleDay}
               </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Personalized guidance tuned to your cycle rhythm
+              Personalized guidance attuned to your cycle rhythm
             </p>
           </div>
         </div>
@@ -114,7 +144,7 @@ export const CompanionPage: React.FC = () => {
         <div className="hidden sm:flex items-center gap-2">
           <div className="px-3 py-1 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 flex items-center gap-1.5 shadow-sm">
             <Zap className="w-3.5 h-3.5 text-amber-500" />
-            <span>High Energy</span>
+            <span>{energyLevel} Energy</span>
           </div>
         </div>
       </div>
@@ -129,7 +159,7 @@ export const CompanionPage: React.FC = () => {
             <div className="flex items-start gap-2.5 max-w-[85%]">
               {msg.sender === 'companion' && (
                 <div className="w-7 h-7 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center mt-0.5 shrink-0 text-xs font-bold">
-                  A
+                  {companionName.charAt(0).toUpperCase()}
                 </div>
               )}
 

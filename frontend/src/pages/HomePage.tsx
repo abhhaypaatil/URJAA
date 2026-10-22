@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useAvatar } from '../context/AvatarContext';
 import { api } from '../api/client';
 import {
   PhaseInfo,
@@ -9,16 +8,33 @@ import {
   DailyRecommendation,
   RecommendedMeal,
   Meal,
+  Exercise,
 } from '../types';
 import {
   DEMO_PHASE_INFO,
   DEMO_RECOMMENDATION,
   DEMO_MEALS,
 } from '../api/mockData';
+import {
+  getGamificationState,
+  completeQuest,
+  swapQuestLocal,
+  saveGamificationState,
+  GamificationState,
+} from '../services/gamificationService';
+
+import { WellnessProgressSummary } from '../components/dashboard/WellnessProgressSummary';
+import { DailyQuestsSection } from '../components/dashboard/DailyQuestsSection';
+import { QuickWellnessCheckin } from '../components/dashboard/QuickWellnessCheckin';
+import { RecentActivitySummary } from '../components/dashboard/RecentActivitySummary';
+import { CompanionPresenceCard } from '../components/companion/CompanionPresenceCard';
+import { UserAvatarBadge } from '../components/avatar/UserAvatarBadge';
+import { ExerciseDetailModal } from '../components/exercise/ExerciseDetailModal';
+import { AchievementsModal } from '../components/dashboard/AchievementsModal';
+
 import { PhaseBadge } from '../components/cycle/PhaseBadge';
 import { CycleRing } from '../components/cycle/CycleRing';
 import { PeriodLoggerModal } from '../components/cycle/PeriodLoggerModal';
-import { DailyLifeSyncForecast } from '../components/cycle/DailyLifeSyncForecast';
 import { WorkoutCard } from '../components/workout/WorkoutCard';
 import { WaterTracker } from '../components/checkin/WaterTracker';
 import { MealCard } from '../components/nutrition/MealCard';
@@ -28,40 +44,138 @@ import { Button } from '../components/common/Button';
 import { Card } from '../components/common/Card';
 import { Skeleton } from '../components/common/Skeleton';
 import { ErrorState } from '../components/common/ErrorState';
+
 import {
-  Heart,
-  Flame,
-  UtensilsCrossed,
   Activity,
-  Calendar as CalendarIcon,
   CheckCircle2,
-  Smile,
-  BatteryCharging,
-  ArrowRight,
-  MessageCircle,
-  Plus,
-  Droplets,
   Sparkles,
+  MessageCircle,
 } from 'lucide-react';
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, profile, hasSettings } = useAuth();
-  const { avatar } = useAvatar();
+  const { user, profile, hasSettings, refreshUserData } = useAuth();
+
+  const companionName = profile?.companion_name || 'Aura';
 
   const [phaseInfo, setPhaseInfo] = useState<PhaseInfo | null>(DEMO_PHASE_INFO);
   const [recommendation, setRecommendation] = useState<DailyRecommendation | null>(DEMO_RECOMMENDATION);
   const [todayCheckin, setTodayCheckin] = useState<DailyCheckin | null>(null);
   const [todayMeals, setTodayMeals] = useState<RecommendedMeal[]>(DEMO_MEALS);
-  const [waterML, setWaterML] = useState<number>(1200);
+  const [waterML, setWaterML] = useState<number>(0);
+
+  // Gamification & Daily Quests state scoped to authenticated user
+  const [gamification, setGamification] = useState<GamificationState>(() =>
+    getGamificationState(user?.id)
+  );
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   // Modals
   const [isPeriodLoggerOpen, setIsPeriodLoggerOpen] = useState<boolean>(false);
+  const [isAchievementsModalOpen, setIsAchievementsModalOpen] = useState<boolean>(false);
   const [substituteMeal, setSubstituteMeal] = useState<Meal | null>(null);
   const [isCompanionOpen, setIsCompanionOpen] = useState<boolean>(false);
+  const [activeExerciseModal, setActiveExerciseModal] = useState<Exercise | null>(null);
+
+  // Celebration banner
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const handleOpenExercise = (quest?: any) => {
+    const title = quest?.title?.toLowerCase() || '';
+    if (title.includes('squat')) {
+      setActiveExerciseModal({
+        id: 'ex-squat',
+        name: quest?.title || 'Gentle Bodyweight Squats',
+        category: 'Strength & Alignment',
+        muscle_groups: ['Quads', 'Glutes', 'Core'],
+        difficulty: 'Beginner',
+        equipment: 'Bodyweight',
+        type: 'reps',
+        default_reps: 10,
+        default_duration_seconds: 60,
+        rest_seconds: 30,
+        instructions: [
+          'Stand with feet shoulder-width apart, toes pointing comfortably outward.',
+          'Hinge at hips, bend knees, and lower torso with a straight, tall spine.',
+          'Descend until thighs approach parallel to the floor, tracking knees over toes.',
+          'Press evenly through heels and midfoot to return smoothly to standing.'
+        ],
+        common_mistakes: ['Allowing knees to cave inward', 'Rounding upper spine'],
+        quiet_friendly: true,
+        low_impact: true,
+        animation_type: 'squat_pattern',
+      });
+    } else if (title.includes('cat-cow') || title.includes('stretch') || title.includes('mobility') || title.includes('flow')) {
+      setActiveExerciseModal({
+        id: 'ex-catcow',
+        name: quest?.title || 'Cat-Cow Spinal Flow',
+        category: 'Spinal Mobility & Breath',
+        muscle_groups: ['Spine', 'Core', 'Pelvic Basin'],
+        difficulty: 'Beginner',
+        equipment: 'Mat',
+        type: 'time',
+        default_reps: 8,
+        default_duration_seconds: 90,
+        rest_seconds: 15,
+        instructions: [
+          'Begin in tabletop position with wrists under shoulders and knees under hips.',
+          'Inhale slowly as you drop belly towards floor, lift chest and tailbone gently.',
+          'Exhale smoothly as you arch spine towards ceiling, releasing head between arms.',
+          'Flow gently in rhythm with your breath without forcing range of motion.'
+        ],
+        common_mistakes: ['Hyperextending the neck', 'Holding breath during transitions'],
+        quiet_friendly: true,
+        low_impact: true,
+        animation_type: 'stretch_pattern',
+      });
+    } else if (title.includes('child') || title.includes('relax') || title.includes('rest')) {
+      setActiveExerciseModal({
+        id: 'ex-childspose',
+        name: "Restorative Child's Pose",
+        category: 'Rest & Decompression',
+        muscle_groups: ['Hips', 'Spine', 'Shoulders'],
+        difficulty: 'Beginner',
+        equipment: 'Mat or Cushion',
+        type: 'time',
+        default_reps: 1,
+        default_duration_seconds: 120,
+        rest_seconds: 0,
+        instructions: [
+          'Kneel on mat with big toes touching and knees comfortably apart.',
+          'Walk hands forward and fold torso gently between thighs.',
+          'Rest forehead on mat or cushion, breathing softly into lower back and ribs.'
+        ],
+        common_mistakes: ['Holding tension in shoulders or neck'],
+        quiet_friendly: true,
+        low_impact: true,
+        animation_type: 'static_hold',
+      });
+    } else {
+      setActiveExerciseModal({
+        id: 'ex-movement-general',
+        name: quest?.title || 'Gentle Bodyweight Squats',
+        category: 'Functional Stamina',
+        muscle_groups: ['Lower body', 'Core'],
+        difficulty: 'Beginner',
+        equipment: 'Bodyweight',
+        type: 'reps',
+        default_reps: 10,
+        default_duration_seconds: 60,
+        rest_seconds: 30,
+        instructions: [
+          'Maintain an upright posture and comfortable stance.',
+          'Descend with controlled breath, pausing momentarily at the bottom.',
+          'Rise smoothly, keeping weight balanced across heels and arches.'
+        ],
+        common_mistakes: ['Rushing the downward phase'],
+        quiet_friendly: true,
+        low_impact: true,
+        animation_type: 'squat_pattern',
+      });
+    }
+  };
 
   const loadDashboardData = async () => {
     setError(null);
@@ -77,7 +191,7 @@ export const HomePage: React.FC = () => {
       const checkinData = await api.getTodayCheckin().catch(() => null);
       if (checkinData?.checkin) {
         setTodayCheckin(checkinData.checkin);
-        setWaterML(checkinData.checkin.water_ml || 1200);
+        setWaterML(checkinData.checkin.water_ml || 0);
       }
 
       // 3. Recommended workout
@@ -90,6 +204,35 @@ export const HomePage: React.FC = () => {
       const nutData = await api.getTodayNutrition().catch(() => null);
       if (nutData?.meals) {
         setTodayMeals(nutData.meals);
+      }
+
+      // 5. Server-backed Gamification & Daily Quests (Stage 5 & Stage 6)
+      const serverGam = await api.getGamification().catch(() => null);
+      if (serverGam && serverGam.quests && serverGam.quests.length > 0) {
+        const mappedState: GamificationState = {
+          level: serverGam.level || 1,
+          levelTitle: serverGam.level_title || 'Gentle Spark',
+          currentXp: serverGam.current_xp || 0,
+          xpForNextLevel: serverGam.xp_for_next_level || 200,
+          totalXpEarned: serverGam.total_xp_earned || 0,
+          streakDays: serverGam.streak_days || 1,
+          quests: serverGam.quests.map((q: any) => ({
+            id: q.id,
+            title: q.title,
+            description: q.description,
+            xpReward: q.xp_reward,
+            category: q.category as any,
+            assetKey: q.asset_key || 'quest-kinetic-spark',
+            completed: q.completed,
+            completedAt: q.completed_at,
+            actionLabel: q.action_label,
+            actionRoute: q.action_route,
+          })),
+          achievements: serverGam.achievements || [],
+          lastActiveDate: serverGam.last_active_date || new Date().toISOString().split('T')[0],
+        };
+        setGamification(mappedState);
+        saveGamificationState(mappedState, user?.id);
       }
     } catch (err: any) {
       console.warn('Notice loading dashboard updates:', err);
@@ -104,9 +247,118 @@ export const HomePage: React.FC = () => {
     loadDashboardData();
   }, [hasSettings, user]);
 
+  const handleQuestCompleted = async (questId: string) => {
+    // 1. Attempt server-side gamification completion first
+    try {
+      const res = await api.completeQuest(questId);
+      if (res && res.state) {
+        const s = res.state;
+        const mappedState: GamificationState = {
+          level: s.level,
+          levelTitle: s.level_title,
+          currentXp: s.current_xp,
+          xpForNextLevel: s.xp_for_next_level,
+          totalXpEarned: s.total_xp_earned,
+          streakDays: s.streak_days,
+          quests: s.quests.map((q: any) => ({
+            id: q.id,
+            title: q.title,
+            description: q.description,
+            xpReward: q.xp_reward,
+            category: q.category as any,
+            assetKey: q.asset_key || 'quest-kinetic-spark',
+            completed: q.completed,
+            completedAt: q.completed_at,
+            actionLabel: q.action_label,
+            actionRoute: q.action_route,
+          })),
+          achievements: s.achievements || [],
+          lastActiveDate: s.last_active_date,
+        };
+        setGamification(mappedState);
+        saveGamificationState(mappedState, user?.id);
+
+        if (res.earned_xp > 0) {
+          setToastMessage(
+            res.leveled_up
+              ? `🎉 Level Up! You reached Level ${res.state.level} • ${res.state.level_title}!`
+              : `✨ Quest Complete! Earned +${res.earned_xp} XP`
+          );
+        } else {
+          setToastMessage("✨ Quest already completed for today!");
+        }
+        setTimeout(() => setToastMessage(null), 3500);
+        return; // Return immediately to prevent double local completion!
+      }
+    } catch (err) {
+      console.warn('[Gamification] Remote completion fallback to local storage:', err);
+    }
+
+    // 2. Client-side local storage fallback ONLY on network/offline fallback
+    const result = completeQuest(questId, user?.id);
+    setGamification(result.state);
+
+    if (result.earnedXp > 0) {
+      setToastMessage(
+        result.leveledUp
+          ? `🎉 Level Up! You reached Level ${result.state.level} • ${result.state.levelTitle}!`
+          : `✨ Quest Complete! Earned +${result.earnedXp} XP`
+      );
+      setTimeout(() => setToastMessage(null), 3500);
+    }
+  };
+
+  const handleSwapQuest = async (questId: string) => {
+    try {
+      const res = await api.swapQuest(questId);
+      if (res && res.state) {
+        const s = res.state;
+        const mappedState: GamificationState = {
+          level: s.level,
+          levelTitle: s.level_title,
+          currentXp: s.current_xp,
+          xpForNextLevel: s.xp_for_next_level,
+          totalXpEarned: s.total_xp_earned,
+          streakDays: s.streak_days,
+          quests: s.quests.map((q: any) => ({
+            id: q.id,
+            title: q.title,
+            description: q.description,
+            xpReward: q.xp_reward,
+            category: q.category as any,
+            assetKey: q.asset_key || 'quest-kinetic-spark',
+            completed: q.completed,
+            completedAt: q.completed_at,
+            actionLabel: q.action_label,
+            actionRoute: q.action_route,
+          })),
+          achievements: s.achievements || [],
+          lastActiveDate: s.last_active_date,
+        };
+        setGamification(mappedState);
+        saveGamificationState(mappedState, user?.id);
+        setToastMessage("🌿 Gentle alternative quest ready—no guilt, no XP lost!");
+        setTimeout(() => setToastMessage(null), 3500);
+        return;
+      }
+    } catch (err) {
+      console.warn('[Gamification] Remote swap fallback to local storage:', err);
+    }
+
+    const resLocal = swapQuestLocal(questId, user?.id);
+    setGamification(resLocal.state);
+    setToastMessage("🌿 Gentle alternative quest ready—no guilt, no XP lost!");
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
   const handleAddWater = async (amount: number) => {
     const nextVal = waterML + amount;
     setWaterML(nextVal);
+
+    if (nextVal >= 500) {
+      handleQuestCompleted('quest-hydration');
+    }
+
     try {
       await api.saveCheckin({
         water_ml: nextVal,
@@ -119,6 +371,9 @@ export const HomePage: React.FC = () => {
 
   const handleSetWater = async (total: number) => {
     setWaterML(total);
+    if (total >= 500) {
+      handleQuestCompleted('quest-hydration');
+    }
     try {
       await api.saveCheckin({
         water_ml: total,
@@ -137,8 +392,25 @@ export const HomePage: React.FC = () => {
           item.meal.id === mealId ? { ...item, completed: !item.completed } : item
         )
       );
+      handleQuestCompleted('quest-nourish');
     } catch (err) {
       console.error('Failed to toggle meal', err);
+    }
+  };
+
+  const handleCheckinSaved = (savedCheckin: DailyCheckin) => {
+    setTodayCheckin(savedCheckin);
+    if (savedCheckin.water_ml) setWaterML(savedCheckin.water_ml);
+    handleQuestCompleted('quest-evening');
+  };
+
+  const handleRenameCompanion = async (newName: string) => {
+    try {
+      await api.updateProfile({ companion_name: newName });
+      await api.updateSettings({ companion_name: newName });
+      await refreshUserData();
+    } catch (err) {
+      console.error('Failed to update companion name', err);
     }
   };
 
@@ -159,284 +431,282 @@ export const HomePage: React.FC = () => {
     return <ErrorState message={error} onRetry={loadDashboardData} />;
   }
 
-  const greetingName = profile?.name || 'Maya';
+  // Authentic Greeting calculation
+  const hour = new Date().getHours();
+  const timeGreeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const greetingName = profile?.name ? profile.name : user?.email ? user.email.split('@')[0] : '';
+  const fullGreeting = greetingName ? `${timeGreeting}, ${greetingName}` : `${timeGreeting}`;
+
   const todayDateFormatted = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'short',
     day: 'numeric',
   });
 
+  const completedQuests = gamification.quests.filter((q) => q.completed);
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-200">
-      {/* 1. Welcoming Lifestyle Greeting Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-slate-900 p-6 sm:p-7 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-soft">
+    <div className="space-y-7 animate-in fade-in duration-200">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-20 right-4 z-50 bg-plum-950 text-white dark:bg-urjaa-rose px-4 py-2.5 rounded-2xl shadow-lg border border-plum-800 text-xs font-semibold flex items-center gap-2 animate-bounce">
+          <Sparkles className="w-4 h-4 text-urjaa-blush" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* ─── SECTION A: WELCOME HEADER ──────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-slate-900 p-6 sm:p-7 rounded-3xl border border-plum-100/70 dark:border-slate-800 shadow-soft">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-rose-50 dark:bg-slate-800 flex items-center justify-center shrink-0">
-            {avatar.generatedAvatarUrl || avatar.sourceImage ? (
-              <img
-                src={avatar.generatedAvatarUrl || avatar.sourceImage}
-                alt={greetingName}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span className="font-serif font-bold text-xl text-rose-600 dark:text-rose-400">
-                {greetingName[0]}
-              </span>
-            )}
-          </div>
+          <UserAvatarBadge
+            avatarId={profile?.avatar_id}
+            avatarUrl={profile?.avatar_url}
+            name={greetingName}
+            size={56}
+          />
 
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-semibold text-plum-600 dark:text-slate-400">
                 {todayDateFormatted}
               </span>
-              <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
-              <span className="text-xs font-semibold text-rose-600 dark:text-rose-400">
+              <span className="w-1 h-1 rounded-full bg-plum-300 dark:bg-slate-700" />
+              <span className="text-xs font-semibold text-urjaa-rose">
                 {phaseInfo?.current_phase || 'Follicular'} Phase
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-serif font-bold text-slate-900 dark:text-white mt-0.5">
-              Good day, {greetingName}
+            <h1 className="text-2xl sm:text-3xl font-serif font-bold text-plum-950 dark:text-white mt-0.5">
+              {fullGreeting}
             </h1>
           </div>
         </div>
 
-        {/* Quick Check-in & Assistant Actions */}
+        {/* Header Action Shortcuts */}
         <div className="flex items-center gap-2.5">
           <Link to="/check-in">
             <Button
-              variant={todayCheckin ? 'outline' : 'rose'}
+              variant={todayCheckin ? 'outline' : 'blush'}
               size="sm"
               leftIcon={
                 todayCheckin ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                 ) : (
                   <Activity className="w-4 h-4" />
                 )
               }
             >
-              {todayCheckin ? 'Check-in Logged' : '20s Check-in'}
+              {todayCheckin ? 'Pulse Logged' : '20s Pulse'}
             </Button>
           </Link>
           <Button
             variant="outline"
             size="sm"
             onClick={() => setIsCompanionOpen(true)}
-            leftIcon={<MessageCircle className="w-4 h-4 text-rose-500" />}
+            leftIcon={<MessageCircle className="w-4 h-4 text-urjaa-rose" />}
           >
-            Ask Assistant
+            Ask {companionName}
           </Button>
         </div>
       </div>
 
-      {/* 2. Cycle Intelligence & Daily Focus Card */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        {/* Left: Cycle Ring (4 cols) */}
-        <Card className="md:col-span-4 flex flex-col items-center justify-center text-center p-6 bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800">
-          <CycleRing
-            currentDay={phaseInfo?.cycle_day || 1}
-            totalDays={phaseInfo?.total_cycle_length || 28}
-            phase={phaseInfo?.current_phase || 'Follicular'}
-            estimatedNextPeriodDays={phaseInfo?.days_until_next_period || 20}
-            onLogClick={() => setIsPeriodLoggerOpen(true)}
-          />
-          {phaseInfo && (
-            <div className="mt-3">
-              <PhaseBadge
-                phase={phaseInfo.current_phase}
-                confidenceLabel={phaseInfo.confidence_label}
-              />
-            </div>
-          )}
-        </Card>
-
-        {/* Right: Today's Biological Rhythm Insight (8 cols) */}
-        <Card variant="rose" className="md:col-span-8 flex flex-col justify-between p-6">
-          <div>
-            <div className="flex items-start justify-between gap-2 mb-2">
-              <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">
-                  Hormonal Rhythm
-                </span>
-                <h3 className="text-xl font-serif font-bold text-slate-900 dark:text-white mt-0.5">
-                  Day {phaseInfo?.cycle_day} • {phaseInfo?.current_phase} Phase
-                </h3>
-              </div>
-              <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 bg-white/90 dark:bg-slate-900/90 px-3 py-1 rounded-full border border-slate-200/80 dark:border-slate-800">
-                {recommendation?.intensity_level || 'Moderate'} Energy
-              </span>
-            </div>
-
-            <p className="text-xs md:text-sm text-slate-700 dark:text-slate-300 leading-relaxed mt-2">
-              {phaseInfo?.phase_description ||
-                'Your hormonal rhythms are guiding your natural energy and recovery needs today.'}
-            </p>
-
-            <div className="mt-4 p-3.5 rounded-2xl bg-white/90 dark:bg-slate-900/80 border border-rose-100 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 space-y-1">
-              <div className="flex items-center gap-2 font-bold text-rose-700 dark:text-rose-300">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Today's Suggested Focus:</span>
-              </div>
-              <p className="text-slate-600 dark:text-slate-400 pl-5 leading-relaxed">
-                {phaseInfo?.recommended_focus ||
-                  'Restorative movement, balanced whole foods, and ample hydration.'}
-              </p>
-            </div>
-          </div>
-
-          {/* Quick Stats Footer */}
-          <div className="mt-4 pt-3.5 border-t border-rose-200/50 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
-            <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400">
-              <span className="flex items-center gap-1.5">
-                <Smile className="w-3.5 h-3.5 text-amber-500" />
-                <span>{todayCheckin?.mood ? `Mood: ${todayCheckin.mood}` : 'Mood not logged'}</span>
-              </span>
-              <span className="flex items-center gap-1.5">
-                <BatteryCharging className="w-3.5 h-3.5 text-emerald-500" />
-                <span>{todayCheckin?.energy ? `Energy: ${todayCheckin.energy}` : 'Energy not logged'}</span>
-              </span>
-            </div>
-
-            <Link
-              to="/cycle"
-              className="text-xs font-bold text-rose-600 dark:text-rose-400 hover:text-rose-700 inline-flex items-center gap-1"
-            >
-              <span>Cycle Details</span>
-              <ArrowRight className="w-3 h-3" />
-            </Link>
-          </div>
-        </Card>
-      </div>
-
-      {/* Daily Life-Sync Forecast (Work, Movement, Nutrition, Skin & Social) */}
-      <DailyLifeSyncForecast
-        phase={phaseInfo?.current_phase || 'Follicular'}
+      {/* ─── COMPANION PRESENCE CARD ─────────────────────────────── */}
+      <CompanionPresenceCard
+        companionName={companionName}
+        userName={greetingName || 'Friend'}
+        phaseName={phaseInfo?.current_phase || 'Follicular'}
         cycleDay={phaseInfo?.cycle_day || 9}
+        onOpenChat={() => setIsCompanionOpen(true)}
+        onRenameCompanion={handleRenameCompanion}
       />
 
-      {/* 3. Movement & Fitness Section (Athletic Personality) */}
-      <div className="space-y-3">
+      {/* ─── SECTION B: WELLNESS PROGRESS SUMMARY ─────────────────── */}
+      <WellnessProgressSummary
+        gamification={gamification}
+        completedQuestsCount={completedQuests.length}
+        totalQuestsCount={gamification.quests.length}
+        onViewAchievements={() => setIsAchievementsModalOpen(true)}
+      />
+
+      {/* ─── SECTION C: DAILY QUESTS ────────────────────────────── */}
+      <DailyQuestsSection
+        quests={gamification.quests}
+        onCompleteQuest={handleQuestCompleted}
+        onOpenExercise={handleOpenExercise}
+        onSwapQuest={handleSwapQuest}
+      />
+
+      {/* ─── SECTION D: 20-SECOND WELLNESS PULSE ─────────────────── */}
+      <QuickWellnessCheckin
+        currentCheckin={todayCheckin}
+        onCheckinSaved={handleCheckinSaved}
+      />
+
+      {/* ─── SECTION E: ACTIVITY AND PROGRESS SUMMARY ───────────── */}
+      <RecentActivitySummary
+        completedQuests={completedQuests}
+        todayCheckin={todayCheckin}
+        waterML={waterML}
+      />
+
+      {/* ─── SECTION F: CORE WELLNESS REALMS ─────────────────────── */}
+      <div className="pt-2 space-y-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Flame className="w-5 h-5 text-rose-600" />
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-              Today's Recommended Movement
-            </h3>
-          </div>
-          <Link
-            to="/workout"
-            className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline inline-flex items-center gap-1"
-          >
-            <span>Workout Library</span>
-            <ArrowRight className="w-3 h-3" />
-          </Link>
-        </div>
-
-        {recommendation?.workout ? (
-          <WorkoutCard
-            workout={recommendation.workout}
-            isRecommended={true}
-            onStart={() => navigate(`/workout/session/${recommendation.workout.id}`)}
-          />
-        ) : (
-          <Card className="text-center p-6 text-xs text-slate-500">
-            No specific workout recommended for today. Check the library for gentle stretches.
-          </Card>
-        )}
-      </div>
-
-      {/* 4. Food & Nutrition Section (Warm Culinary Personality) */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <UtensilsCrossed className="w-5 h-5 text-sage-600" />
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-              Today's Nourishment Plan
-            </h3>
-          </div>
-          <Link
-            to="/nutrition"
-            className="text-xs font-semibold text-sage-700 dark:text-sage-400 hover:underline inline-flex items-center gap-1"
-          >
-            <span>All Meals</span>
-            <ArrowRight className="w-3 h-3" />
-          </Link>
-        </div>
-
-        {recommendation?.nutrition_focus && (
-          <div className="p-3.5 rounded-2xl bg-sage-50 dark:bg-sage-950/30 border border-sage-200/80 dark:border-sage-900/60 text-xs text-sage-800 dark:text-sage-200">
-            <span className="font-bold">Nutrition Focus: </span>
-            {recommendation.nutrition_focus}
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {todayMeals.slice(0, 2).map((item) => (
-            <MealCard
-              key={item.meal.id}
-              meal={item.meal}
-              completed={item.completed}
-              onToggleComplete={() => handleToggleMeal(item.meal.id)}
-              onOpenSubstitute={() => setSubstituteMeal(item.meal)}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* 5. Hydration & Daily Check-in Card */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Droplets className="w-5 h-5 text-sky-600" />
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-            Daily Water & Habit Tracking
+          <h3 className="text-lg font-serif font-bold text-plum-950 dark:text-white">
+            Today's Synchronized Plan
           </h3>
+          <span className="text-xs text-plum-500 dark:text-slate-400">
+            Phase-Aware Recommendations
+          </span>
         </div>
 
-        <Card className="p-5 bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800">
-          <WaterTracker
-            waterML={waterML}
-            targetML={recommendation?.hydration_target_ml || 2200}
-            onAddWater={handleAddWater}
-            onSetWater={handleSetWater}
-          />
-        </Card>
+        {/* 1. Cycle & Biological Rhythm Card */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          <Card className="md:col-span-4 flex flex-col items-center justify-center text-center p-6 bg-white dark:bg-slate-900 border-plum-100/70 dark:border-slate-800">
+            <CycleRing
+              currentDay={phaseInfo?.cycle_day || 1}
+              totalDays={phaseInfo?.total_cycle_length || 28}
+              phase={phaseInfo?.current_phase || 'Follicular'}
+              estimatedNextPeriodDays={phaseInfo?.days_until_next_period || 20}
+              onLogClick={() => setIsPeriodLoggerOpen(true)}
+            />
+            {phaseInfo && (
+              <div className="mt-3">
+                <PhaseBadge
+                  phase={phaseInfo.current_phase}
+                  confidenceLabel={phaseInfo.confidence_label}
+                />
+              </div>
+            )}
+            <p className="text-xs text-plum-600 dark:text-slate-400 mt-3 leading-relaxed">
+              {phaseInfo?.phase_description ||
+                'Cycle tracking attuned to hormone metabolism and neuro-muscular stamina.'}
+            </p>
+          </Card>
+
+          {/* 2. Today's Recommended Workout Card */}
+          <div className="md:col-span-8 space-y-2">
+            {recommendation?.personalization_reason && (
+              <div className="px-3.5 py-2 rounded-2xl bg-blush-50/70 dark:bg-rose-950/30 border border-blush-200/60 dark:border-rose-900/40 text-xs text-plum-700 dark:text-rose-200 flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-blush-600 dark:text-rose-400 shrink-0" />
+                <span className="font-medium">{recommendation.personalization_reason}</span>
+              </div>
+            )}
+            {recommendation ? (
+              <WorkoutCard
+                workout={recommendation.workout}
+                isRecommended={true}
+                onStart={() => navigate('/workout')}
+              />
+            ) : (
+              <Card className="p-8 text-center bg-white dark:bg-slate-900 border-plum-100/70">
+                <p className="text-sm text-plum-600">No workout recommendation available right now.</p>
+              </Card>
+            )}
+          </div>
+        </div>
+
+        {/* 3. Hydration & Nutrition Row */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          {/* Hydration Tracker */}
+          <div className="md:col-span-4">
+            <WaterTracker
+              waterML={waterML}
+              targetML={2200}
+              onAddWater={handleAddWater}
+              onSetWater={handleSetWater}
+            />
+          </div>
+
+          {/* Nutrition Meals */}
+          <div className="md:col-span-8 space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-bold text-plum-950 dark:text-white">
+                Phase-Aligned Nutrition
+              </h4>
+              <Link
+                to="/nutrition"
+                className="text-xs font-semibold text-urjaa-rose hover:underline"
+              >
+                Full Meal Plan
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {todayMeals.slice(0, 2).map((item) => (
+                <MealCard
+                  key={item.meal.id}
+                  meal={item.meal}
+                  completed={item.completed}
+                  onToggleComplete={() => handleToggleMeal(item.meal.id)}
+                  onOpenSubstitute={() => setSubstituteMeal(item.meal)}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Modals */}
+      {/* Period Logger Modal */}
       <PeriodLoggerModal
         isOpen={isPeriodLoggerOpen}
         onClose={() => setIsPeriodLoggerOpen(false)}
         onSuccess={loadDashboardData}
       />
 
-      <SubstitutionModal
-        isOpen={!!substituteMeal}
-        onClose={() => setSubstituteMeal(null)}
-        meal={substituteMeal}
-        onSelectSubstitute={(title) => {
-          if (substituteMeal) {
+      {/* Achievements & Badges Modal (Stage 6) */}
+      <AchievementsModal
+        isOpen={isAchievementsModalOpen}
+        onClose={() => setIsAchievementsModalOpen(false)}
+        achievements={gamification.achievements}
+      />
+
+      {/* Meal Substitution Modal */}
+      {substituteMeal && (
+        <SubstitutionModal
+          isOpen={!!substituteMeal}
+          onClose={() => setSubstituteMeal(null)}
+          meal={substituteMeal}
+          onSelectSubstitute={(subTitle) => {
             setTodayMeals((prev) =>
               prev.map((item) =>
                 item.meal.id === substituteMeal.id
-                  ? { ...item, meal: { ...item.meal, title } }
+                  ? { ...item, meal: { ...item.meal, title: subTitle } }
                   : item
               )
             );
-          }
-        }}
-      />
+            setSubstituteMeal(null);
+            handleQuestCompleted('quest-nourish');
+          }}
+        />
+      )}
 
+      {/* Assistant Slide-Out Drawer */}
       <CompanionDrawer
         isOpen={isCompanionOpen}
         onClose={() => setIsCompanionOpen(false)}
+        onRenameCompanion={handleRenameCompanion}
         context={{
-          userName: greetingName,
+          userName: greetingName || '',
+          companionName,
+          primaryGoal: profile?.primary_goal,
+          dietaryPreference: profile?.dietary_preference,
           phase: phaseInfo?.current_phase || 'Follicular',
           cycleDay: phaseInfo?.cycle_day || 9,
-          energyLevel: todayCheckin?.energy || 'High',
-          hydrationML: waterML,
+          energyLevel: todayCheckin?.energy || 'Balanced',
         }}
       />
+
+      {/* Illustrated Exercise Avatar Demonstration Modal (Stage 5) */}
+      {activeExerciseModal && (
+        <ExerciseDetailModal
+          isOpen={!!activeExerciseModal}
+          onClose={() => setActiveExerciseModal(null)}
+          exercise={activeExerciseModal}
+          onCompleteExercise={() => {
+            handleQuestCompleted('quest-movement');
+          }}
+        />
+      )}
     </div>
   );
 };

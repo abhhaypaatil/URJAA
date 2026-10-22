@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { UserAvatar, AvatarStyle, AvatarAuraColor, AvatarGlowIntensity } from '../types';
+import { UserAvatar, AvatarStyle, AvatarAuraColor } from '../types';
+import { uploadImageToCloudinary } from '../services/cloudinaryService';
 
 interface AvatarContextType {
   avatar: UserAvatar;
@@ -57,7 +58,8 @@ export const AvatarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   /**
    * Processes an uploaded user photograph into a stylized cosmic avatar using HTML5 Canvas.
-   * Real image processing: applies canvas duotone tints, radial glows, and soft cinematic vignettes.
+   * Real image processing: applies canvas duotone tints, radial glows, and soft vignettes.
+   * Seamlessly persists to Cloudinary (urjaa/avatars) when credentials are provided.
    */
   const processPhotoToAvatar = async (
     file: File,
@@ -75,14 +77,14 @@ export const AvatarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     for (const step of steps) {
       setGenerationStep(step);
-      await new Promise((r) => setTimeout(r, 600));
+      await new Promise((r) => setTimeout(r, 450));
     }
 
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const img = new Image();
-        img.onload = () => {
+        img.onload = async () => {
           try {
             // Render onto an offscreen canvas
             const canvas = document.createElement('canvas');
@@ -189,11 +191,24 @@ export const AvatarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             ctx.stroke();
 
             const finalDataUrl = canvas.toDataURL('image/webp', 0.9);
+            let finalDeliveryUrl = finalDataUrl;
+
+            // Attempt Cloudinary upload if configured
+            try {
+              const res = await fetch(finalDataUrl);
+              const blob = await res.blob();
+              const cldRes = await uploadImageToCloudinary(blob, 'urjaa/avatars');
+              if (cldRes.url && !cldRes.isMockFallback) {
+                finalDeliveryUrl = cldRes.url;
+              }
+            } catch (cldErr) {
+              console.info('[URJAA] Local avatar retained, Cloudinary upload deferred:', cldErr);
+            }
 
             const updatedAvatar: UserAvatar = {
               id: `avatar-${Date.now()}`,
               sourceImage: e.target?.result as string,
-              generatedAvatarUrl: finalDataUrl,
+              generatedAvatarUrl: finalDeliveryUrl,
               style: targetStyle,
               auraColor: targetAura,
               energyLevel: 96,
@@ -211,7 +226,7 @@ export const AvatarProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
             setAvatar(updatedAvatar);
             setIsGenerating(false);
-            resolve(finalDataUrl);
+            resolve(finalDeliveryUrl);
           } catch (err) {
             setIsGenerating(false);
             reject(err);

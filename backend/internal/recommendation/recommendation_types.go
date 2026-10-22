@@ -22,19 +22,20 @@ type EngineInput struct {
 }
 
 type DailyRecommendation struct {
-	Date                string                  `json:"date"`
-	CyclePhase          cycle.PhaseType         `json:"cycle_phase"`
-	CycleDay            int                     `json:"cycle_day"`
-	Workout             *database.WorkoutRecord `json:"workout"`
-	WorkoutFocus        string                  `json:"workout_focus"`
-	IntensityLevel      string                  `json:"intensity_level"`
-	NutritionFocus      string                  `json:"nutrition_focus"`
-	RecommendedNutrients []string               `json:"recommended_nutrients"`
-	HydrationTargetML   int                     `json:"hydration_target_ml"`
-	HydrationTip        string                  `json:"hydration_tip"`
-	RecoveryNote        string                  `json:"recovery_note"`
-	IsPCOSAdapted       bool                    `json:"is_pcos_adapted"`
-	Disclaimer          string                  `json:"disclaimer"`
+	Date                 string                  `json:"date"`
+	CyclePhase           cycle.PhaseType         `json:"cycle_phase"`
+	CycleDay             int                     `json:"cycle_day"`
+	Workout              *database.WorkoutRecord `json:"workout"`
+	WorkoutFocus         string                  `json:"workout_focus"`
+	IntensityLevel       string                  `json:"intensity_level"`
+	NutritionFocus       string                  `json:"nutrition_focus"`
+	RecommendedNutrients []string                `json:"recommended_nutrients"`
+	HydrationTargetML    int                     `json:"hydration_target_ml"`
+	HydrationTip         string                  `json:"hydration_tip"`
+	RecoveryNote         string                  `json:"recovery_note"`
+	IsPCOSAdapted        bool                    `json:"is_pcos_adapted"`
+	PersonalizationReason string                 `json:"personalization_reason"`
+	Disclaimer           string                  `json:"disclaimer"`
 }
 
 // Configurable Rule Engine Thresholds per §16

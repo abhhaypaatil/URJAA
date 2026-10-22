@@ -16,11 +16,19 @@ export interface UserProfile {
   user_id: string;
   name: string;
   wellness_goal: string;
+  primary_goal?: string;
+  secondary_goals?: string[];
   fitness_level: FitnessLevel;
   preferred_workout_duration: number;
+  workout_location?: string;
+  available_equipment?: string[];
+  preferred_activities?: string[];
   dietary_preference: DietaryPreference;
   exercise_limitations: string[];
   pcos_pcod_mode: boolean;
+  avatar_id?: string;
+  avatar_url?: string;
+  companion_name?: string;
   updated_at: string;
 }
 
@@ -28,6 +36,7 @@ export interface UserPreferences {
   user_id: string;
   theme_preference: ThemePreference;
   quiet_mode: boolean;
+  companion_name?: string;
   notify_period: boolean;
   notify_checkin: boolean;
   notify_hydration: boolean;
@@ -187,7 +196,20 @@ export interface DailyRecommendation {
   hydration_tip: string;
   recovery_note: string;
   is_pcos_adapted: boolean;
+  personalization_reason?: string;
   disclaimer: string;
+}
+
+export interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  icon: string;
+  unlocked: boolean;
+  unlocked_at?: string;
+  progress: number;
+  max_progress: number;
 }
 
 export interface WorkoutSession {
