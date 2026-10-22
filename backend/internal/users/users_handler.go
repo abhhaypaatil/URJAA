@@ -19,6 +19,11 @@ func NewHandler(db *database.DB) *Handler {
 }
 
 type OnboardingRequest struct {
+	PrimaryGoal              string   `json:"primary_goal,omitempty"`
+	SecondaryGoals           []string `json:"secondary_goals,omitempty"`
+	WorkoutLocation          string   `json:"workout_location,omitempty"`
+	AvailableEquipment       []string `json:"available_equipment,omitempty"`
+	PreferredActivities      []string `json:"preferred_activities,omitempty"`
 	LastPeriodStart          string   `json:"last_period_start"`
 	PeriodDuration           int      `json:"period_duration"`
 	AvgCycleLength           int      `json:"avg_cycle_length"`
@@ -29,9 +34,17 @@ type OnboardingRequest struct {
 	DietaryPreference        string   `json:"dietary_preference"` // Vegetarian, Eggetarian, Non-vegetarian, Vegan
 	ExerciseLimitations      []string `json:"exercise_limitations"`
 	PCOSPCODMode             bool     `json:"pcos_pcod_mode"`
+	AvatarID                 string   `json:"avatar_id,omitempty"`
+	AvatarURL                string   `json:"avatar_url,omitempty"`
+	CompanionName            string   `json:"companion_name,omitempty"`
 }
 
 type UpdateProfileRequest struct {
+	PrimaryGoal              string   `json:"primary_goal,omitempty"`
+	SecondaryGoals           []string `json:"secondary_goals,omitempty"`
+	WorkoutLocation          string   `json:"workout_location,omitempty"`
+	AvailableEquipment       []string `json:"available_equipment,omitempty"`
+	PreferredActivities      []string `json:"preferred_activities,omitempty"`
 	Name                     string   `json:"name"`
 	WellnessGoal             string   `json:"wellness_goal"`
 	FitnessLevel             string   `json:"fitness_level"`
@@ -39,11 +52,15 @@ type UpdateProfileRequest struct {
 	DietaryPreference        string   `json:"dietary_preference"`
 	ExerciseLimitations      []string `json:"exercise_limitations"`
 	PCOSPCODMode             bool     `json:"pcos_pcod_mode"`
+	AvatarID                 string   `json:"avatar_id,omitempty"`
+	AvatarURL                string   `json:"avatar_url,omitempty"`
+	CompanionName            string   `json:"companion_name,omitempty"`
 }
 
 type UpdatePreferencesRequest struct {
 	ThemePreference string `json:"theme_preference"` // system, light, dark
 	QuietMode       bool   `json:"quiet_mode"`
+	CompanionName   string `json:"companion_name,omitempty"`
 	NotifyPeriod    bool   `json:"notify_period"`
 	NotifyCheckin   bool   `json:"notify_checkin"`
 	NotifyHydration bool   `json:"notify_hydration"`
@@ -102,11 +119,38 @@ func (h *Handler) CompleteOnboarding(w http.ResponseWriter, r *http.Request) {
 		h.DB.Storage.Profiles[userID] = profile
 	}
 	profile.WellnessGoal = req.WellnessGoal
+	if req.PrimaryGoal != "" {
+		profile.PrimaryGoal = req.PrimaryGoal
+		if profile.WellnessGoal == "" {
+			profile.WellnessGoal = req.PrimaryGoal
+		}
+	}
+	if len(req.SecondaryGoals) > 0 {
+		profile.SecondaryGoals = req.SecondaryGoals
+	}
+	if req.WorkoutLocation != "" {
+		profile.WorkoutLocation = req.WorkoutLocation
+	}
+	if len(req.AvailableEquipment) > 0 {
+		profile.AvailableEquipment = req.AvailableEquipment
+	}
+	if len(req.PreferredActivities) > 0 {
+		profile.PreferredActivities = req.PreferredActivities
+	}
 	profile.FitnessLevel = req.FitnessLevel
 	profile.PreferredWorkoutDuration = req.PreferredWorkoutDuration
 	profile.DietaryPreference = req.DietaryPreference
 	profile.ExerciseLimitations = req.ExerciseLimitations
 	profile.PCOSPCODMode = req.PCOSPCODMode
+	if req.AvatarID != "" {
+		profile.AvatarID = req.AvatarID
+	}
+	if req.AvatarURL != "" {
+		profile.AvatarURL = req.AvatarURL
+	}
+	if req.CompanionName != "" {
+		profile.CompanionName = req.CompanionName
+	}
 	profile.UpdatedAt = time.Now()
 
 	models.RespondJSON(w, http.StatusOK, map[string]interface{}{
@@ -156,6 +200,24 @@ func (h *Handler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	if req.Name != "" {
 		profile.Name = req.Name
 	}
+	if req.PrimaryGoal != "" {
+		profile.PrimaryGoal = req.PrimaryGoal
+		if req.WellnessGoal == "" {
+			profile.WellnessGoal = req.PrimaryGoal
+		}
+	}
+	if len(req.SecondaryGoals) > 0 {
+		profile.SecondaryGoals = req.SecondaryGoals
+	}
+	if req.WorkoutLocation != "" {
+		profile.WorkoutLocation = req.WorkoutLocation
+	}
+	if len(req.AvailableEquipment) > 0 {
+		profile.AvailableEquipment = req.AvailableEquipment
+	}
+	if len(req.PreferredActivities) > 0 {
+		profile.PreferredActivities = req.PreferredActivities
+	}
 	if req.WellnessGoal != "" {
 		profile.WellnessGoal = req.WellnessGoal
 	}
@@ -167,6 +229,15 @@ func (h *Handler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.DietaryPreference != "" {
 		profile.DietaryPreference = req.DietaryPreference
+	}
+	if req.AvatarID != "" {
+		profile.AvatarID = req.AvatarID
+	}
+	if req.AvatarURL != "" {
+		profile.AvatarURL = req.AvatarURL
+	}
+	if req.CompanionName != "" {
+		profile.CompanionName = req.CompanionName
 	}
 	profile.ExerciseLimitations = req.ExerciseLimitations
 	profile.PCOSPCODMode = req.PCOSPCODMode
@@ -216,6 +287,12 @@ func (h *Handler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 	if req.ThemePreference != "" {
 		prefs.ThemePreference = req.ThemePreference
 	}
+	if req.CompanionName != "" {
+		prefs.CompanionName = req.CompanionName
+		if profile := h.DB.Storage.Profiles[userID]; profile != nil {
+			profile.CompanionName = req.CompanionName
+		}
+	}
 	prefs.QuietMode = req.QuietMode
 	prefs.NotifyPeriod = req.NotifyPeriod
 	prefs.NotifyCheckin = req.NotifyCheckin
@@ -228,33 +305,7 @@ func (h *Handler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 	models.RespondJSON(w, http.StatusOK, prefs)
 }
 
-// DELETE /api/v1/profile (Privacy & Data deletion per §17)
-func (h *Handler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
-	userID, ok := middleware.GetUserID(r.Context())
-	if !ok {
-		models.RespondError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Not authorized")
-		return
-	}
-
-	user := h.DB.Storage.Users[userID]
-	if user != nil {
-		delete(h.DB.Storage.UsersByEmail, user.Email)
-	}
-	delete(h.DB.Storage.Users, userID)
-	delete(h.DB.Storage.Profiles, userID)
-	delete(h.DB.Storage.Preferences, userID)
-	delete(h.DB.Storage.CycleSettings, userID)
-	delete(h.DB.Storage.Cycles, userID)
-	delete(h.DB.Storage.Checkins, userID)
-	delete(h.DB.Storage.Sessions, userID)
-	delete(h.DB.Storage.MealLogs, userID)
-
-	models.RespondJSON(w, http.StatusOK, map[string]string{
-		"message": "Account and all associated health data successfully permanently deleted.",
-	})
-}
-
-// GET /api/v1/profile/export (Data export per §17)
+// GET /api/v1/profile/export
 func (h *Handler) ExportData(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.GetUserID(r.Context())
 	if !ok {
@@ -262,21 +313,65 @@ func (h *Handler) ExportData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := h.DB.Storage.Users[userID]
-	profile := h.DB.Storage.Profiles[userID]
-	cycleSettings := h.DB.Storage.CycleSettings[userID]
-	cycles := h.DB.Storage.Cycles[userID]
-	checkins := h.DB.Storage.Checkins[userID]
-	sessions := h.DB.Storage.Sessions[userID]
+	exportData := map[string]interface{}{
+		"user":           h.DB.Storage.Users[userID],
+		"profile":        h.DB.Storage.Profiles[userID],
+		"preferences":    h.DB.Storage.Preferences[userID],
+		"cycle_settings": h.DB.Storage.CycleSettings[userID],
+		"cycles":         h.DB.Storage.Cycles[userID],
+		"checkins":       h.DB.Storage.Checkins[userID],
+		"sessions":       h.DB.Storage.Sessions[userID],
+		"exported_at":    time.Now(),
+		"disclaimer":     models.MedicalDisclaimer,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Disposition", "attachment; filename=urjaa_health_export.json")
+	models.RespondJSON(w, http.StatusOK, exportData)
+}
+
+// POST /api/v1/profile/clear-personalization
+func (h *Handler) ClearPersonalization(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		models.RespondError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Not authorized")
+		return
+	}
+
+	// Reset profile to default gentle baseline while preserving user account, lifetime XP, and level
+	if profile := h.DB.Storage.Profiles[userID]; profile != nil {
+		profile.ExerciseLimitations = []string{}
+		profile.PreferredActivities = []string{}
+		profile.UpdatedAt = time.Now()
+	}
 
 	models.RespondJSON(w, http.StatusOK, map[string]interface{}{
-		"export_date":    time.Now(),
-		"user":           user,
-		"profile":        profile,
-		"cycle_settings": cycleSettings,
-		"cycle_history":  cycles,
-		"checkins":       checkins,
-		"workouts":       sessions,
-		"disclaimer":     models.MedicalDisclaimer,
+		"status":  "cleared",
+		"message": "Personalization history has been cleared. Baseline recommendations restored.",
+	})
+}
+
+// DELETE /api/v1/profile
+func (h *Handler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		models.RespondError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Not authorized")
+		return
+	}
+
+	delete(h.DB.Storage.Users, userID)
+	delete(h.DB.Storage.Profiles, userID)
+	delete(h.DB.Storage.Preferences, userID)
+	delete(h.DB.Storage.CycleSettings, userID)
+	delete(h.DB.Storage.Cycles, userID)
+	delete(h.DB.Storage.Checkins, userID)
+	delete(h.DB.Storage.Sessions, userID)
+	delete(h.DB.Storage.GamificationStates, userID)
+	delete(h.DB.Storage.QuestCompletions, userID)
+	delete(h.DB.Storage.MealLogs, userID)
+
+	models.RespondJSON(w, http.StatusOK, map[string]interface{}{
+		"status":  "deleted",
+		"message": "Your account and all associated health data have been permanently purged.",
 	})
 }

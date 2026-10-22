@@ -15,6 +15,7 @@ import (
 	"urjaa-backend/internal/checkin"
 	"urjaa-backend/internal/config"
 	"urjaa-backend/internal/cycle"
+	"urjaa-backend/internal/gamification"
 	"urjaa-backend/internal/database"
 	"urjaa-backend/internal/insights"
 	"urjaa-backend/internal/middleware"
@@ -57,6 +58,7 @@ func main() {
 	workoutHandler := workout.NewHandler(db, recSvc, cycleSvc)
 	calendarHandler := calendar.NewHandler(calendarSvc, db)
 	insightsHandler := insights.NewHandler(db, cycleSvc)
+	gamificationHandler := gamification.NewHandler(db)
 
 	// Router setup
 	mux := http.NewServeMux()
@@ -145,6 +147,13 @@ func main() {
 	mux.Handle("/api/v1/profile/export", authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
 			usersHandler.ExportData(w, r)
+		} else {
+			models.RespondError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "Method not allowed")
+		}
+	})))
+	mux.Handle("/api/v1/profile/clear-personalization", authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			usersHandler.ClearPersonalization(w, r)
 		} else {
 			models.RespondError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "Method not allowed")
 		}
@@ -326,6 +335,26 @@ func main() {
 	mux.Handle("/api/v1/insights/nutrition", authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
 			insightsHandler.GetNutritionInsights(w, r)
+		} else {
+			models.RespondError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "Method not allowed")
+		}
+	})))
+
+	// Gamification Endpoints (Stage 5 & Stage 6)
+	mux.Handle("/api/v1/gamification", authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			gamificationHandler.GetGamification(w, r)
+		} else {
+			models.RespondError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "Method not allowed")
+		}
+	})))
+	mux.Handle("/api/v1/gamification/quests/", authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			if strings.HasSuffix(r.URL.Path, "/swap") || strings.HasSuffix(r.URL.Path, "/skip") {
+				gamificationHandler.SwapQuest(w, r)
+			} else {
+				gamificationHandler.CompleteQuest(w, r)
+			}
 		} else {
 			models.RespondError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "Method not allowed")
 		}

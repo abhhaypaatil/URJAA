@@ -245,64 +245,108 @@ func (s *MemoryStorage) seedExercises() {
 
 func (s *MemoryStorage) seedMeals() {
 	meals := []*MealRecord{
-		// VEGETARIAN
+		// --- VEGETARIAN INDIAN MEALS ---
 		{
-			ID: "44444444-0000-0000-0000-000000000001", Title: "Iron & Berry Warm Oatmeal", MealType: "Breakfast",
-			PhaseTarget: "Menstrual", DietaryPreference: "Vegetarian",
-			Description: "Warm rolled oats cooked with almond milk, topped with chia seeds, pumpkin seeds, and antioxidant berries.",
-			KeyNutrients: []string{"Iron", "Fiber", "Healthy Fats"}, PrepTimeMin: 10,
+			ID: "44444444-0000-0000-0000-000000000001", Title: "Kanda Poha with Peanuts & Curry Leaves", MealType: "Breakfast",
+			PhaseTarget: "Follicular", DietaryPreference: "Vegetarian",
+			Description: "Light flattened rice tossed with roasted mustard seeds, crunchy peanuts, turmeric, and fresh lemon. Gentle on digestion and rich in bio-available iron.",
+			KeyNutrients: []string{"Iron", "Complex Carbs", "Vitamin C", "Healthy Fats"}, PrepTimeMin: 15,
 			Items: []MealItemRecord{
-				{ID: "55555555-0000-0000-0000-000000000001", MealID: "44444444-0000-0000-0000-000000000001", FoodName: "Rolled Oats", Portion: "1 cup cooked", Category: "Grains", SubstitutionOptions: []SubstitutionOption{{Name: "Quinoa Flakes", Reason: "Gluten-free complete protein"}, {Name: "Buckwheat Porridge", Reason: "High magnesium"}}},
-				{ID: "55555555-0000-0000-0000-000000000002", MealID: "44444444-0000-0000-0000-000000000001", FoodName: "Chia Seeds", Portion: "1 tbsp", Category: "Seeds", SubstitutionOptions: []SubstitutionOption{{Name: "Ground Flaxseed", Reason: "Rich in omega-3"}, {Name: "Hemp Hearts", Reason: "Higher protein"}}},
+				{ID: "55555555-0000-0000-0000-000000000001", MealID: "44444444-0000-0000-0000-000000000001", FoodName: "Thick Poha (Flattened Rice)", Portion: "1.5 cups cooked", Category: "Grains", SubstitutionOptions: []SubstitutionOption{{Name: "Red Rice Poha", Reason: "Higher antioxidant anthocyanins"}, {Name: "Oats Upma", Reason: "Higher beta-glucan fiber"}}},
+				{ID: "55555555-0000-0000-0000-000000000002", MealID: "44444444-0000-0000-0000-000000000001", FoodName: "Roasted Peanuts", Portion: "2 tbsp", Category: "Nuts", SubstitutionOptions: []SubstitutionOption{{Name: "Roasted Almonds", Reason: "Higher vitamin E"}, {Name: "Boiled Sprouts", Reason: "Lower fat protein boost"}}},
 			},
 		},
 		{
-			ID: "44444444-0000-0000-0000-000000000002", Title: "Lentil & Spinach Nourish Bowl", MealType: "Lunch",
+			ID: "44444444-0000-0000-0000-000000000002", Title: "Moong Dal & Spinach Chilla with Mint Chutney", MealType: "Breakfast",
 			PhaseTarget: "Menstrual", DietaryPreference: "Vegetarian",
-			Description: "Warm yellow dal with wilted baby spinach, brown basmati rice, and a splash of lemon juice to enhance iron absorption.",
-			KeyNutrients: []string{"Iron", "Folate", "Protein", "Vitamin C"}, PrepTimeMin: 20,
+			Description: "Savory protein-dense yellow moong dal crepes blended with tender spinach, ginger, and cumin. Paired with digestive fresh mint chutney.",
+			KeyNutrients: []string{"Plant Protein", "Folate", "Iron", "Zinc"}, PrepTimeMin: 15,
 			Items: []MealItemRecord{
-				{ID: "55555555-0000-0000-0000-000000000003", MealID: "44444444-0000-0000-0000-000000000002", FoodName: "Lentils (Cooked)", Portion: "1 cup", Category: "Legumes", SubstitutionOptions: []SubstitutionOption{{Name: "Chickpeas", Reason: "Firm texture and folate"}, {Name: "Black Beans", Reason: "High anthocyanins"}}},
+				{ID: "55555555-0000-0000-0000-000000000003", MealID: "44444444-0000-0000-0000-000000000002", FoodName: "Yellow Moong Dal Batter", Portion: "2 medium chillas", Category: "Legumes", SubstitutionOptions: []SubstitutionOption{{Name: "Besan (Chickpea Flour)", Reason: "Quick preparation"}, {Name: "Sprouted Ragi Dosa", Reason: "High calcium"}}},
 			},
 		},
 		{
-			ID: "44444444-0000-0000-0000-000000000003", Title: "Walnut & Dark Chocolate Energy Cup", MealType: "Snack",
-			PhaseTarget: "Menstrual", DietaryPreference: "Vegetarian",
-			Description: "Raw walnuts paired with 70% dark chocolate and ginger herbal tea for cramp comfort.",
-			KeyNutrients: []string{"Magnesium", "Healthy Fats", "Polyphenols"}, PrepTimeMin: 5,
+			ID: "44444444-0000-0000-0000-000000000003", Title: "Steamed Idlis with Drumstick Sambar & Chutney", MealType: "Breakfast",
+			PhaseTarget: "Ovulatory", DietaryPreference: "Vegetarian",
+			Description: "Soft, naturally fermented rice-lentil cakes served with piping hot toor dal sambar rich in drumsticks, carrots, and mild coconut chutney.",
+			KeyNutrients: []string{"Gut Probiotics", "Protein", "Fiber", "Potassium"}, PrepTimeMin: 15,
 		},
 		{
-			ID: "44444444-0000-0000-0000-000000000004", Title: "Ginger Tofu & Roasted Vegetable Curry", MealType: "Dinner",
-			PhaseTarget: "Menstrual", DietaryPreference: "Vegetarian",
-			Description: "Comforting warming coconut curry with paneer or firm tofu, sweet potatoes, and steamed green beans.",
-			KeyNutrients: []string{"Calcium", "Protein", "Fiber"}, PrepTimeMin: 25,
-		},
-		// EGGETARIAN
-		{
-			ID: "44444444-0000-0000-0000-000000000009", Title: "Spinach & Feta Scramble with Sourdough", MealType: "Breakfast",
-			PhaseTarget: "Menstrual", DietaryPreference: "Eggetarian",
-			Description: "Two free-range eggs scrambled with wilted baby spinach and crumbled feta on toasted whole-grain sourdough.",
-			KeyNutrients: []string{"Protein", "Iron", "Choline"}, PrepTimeMin: 10,
+			ID: "44444444-0000-0000-0000-000000000004", Title: "Dal Tadka with Phulkas & Cucumber Raita", MealType: "Lunch",
+			PhaseTarget: "Any", DietaryPreference: "Vegetarian",
+			Description: "Comforting yellow lentil curry tempered with ghee, cumin, and garlic, paired with 2 whole wheat phulkas and cooling cucumber curd.",
+			KeyNutrients: []string{"Protein", "B-Vitamins", "Calcium", "Hydration"}, PrepTimeMin: 25,
 			Items: []MealItemRecord{
-				{ID: "55555555-0000-0000-0000-000000000005", MealID: "44444444-0000-0000-0000-000000000009", FoodName: "Free-range Eggs", Portion: "2 large eggs", Category: "Protein", SubstitutionOptions: []SubstitutionOption{{Name: "Scrambled Tofu", Reason: "Plant-based soy isoflavones"}, {Name: "Cottage Cheese", Reason: "High casein protein"}}},
+				{ID: "55555555-0000-0000-0000-000000000004", MealID: "44444444-0000-0000-0000-000000000004", FoodName: "Toor & Moong Dal", Portion: "1 bowl (200ml)", Category: "Legumes", SubstitutionOptions: []SubstitutionOption{{Name: "Panchmel Dal", Reason: "5-lentil broad amino acids"}, {Name: "Chana Dal", Reason: "Lower glycemic response"}}},
 			},
 		},
-		// NON-VEGETARIAN
 		{
-			ID: "44444444-0000-0000-0000-000000000013", Title: "Smoked Salmon & Avocado Toast", MealType: "Breakfast",
+			ID: "44444444-0000-0000-0000-000000000005", Title: "Palak Paneer with Jowar Roti & Beet Salad", MealType: "Lunch",
+			PhaseTarget: "Luteal", DietaryPreference: "Vegetarian",
+			Description: "Tender paneer cubes simmered in spiced fresh spinach puree, accompanied by gluten-free jowar (sorghum) flatbread and grated beetroot salad.",
+			KeyNutrients: []string{"Calcium", "High Protein", "Magnesium", "Fiber"}, PrepTimeMin: 30,
+		},
+		{
+			ID: "44444444-0000-0000-0000-000000000006", Title: "Rajma Masala with Steamed Brown Rice", MealType: "Dinner",
+			PhaseTarget: "Follicular", DietaryPreference: "Vegetarian",
+			Description: "Slow-simmered red kidney beans in aromatic onion-tomato masala, served over steamed brown basmati rice with crunchy kachumber.",
+			KeyNutrients: []string{"Iron", "Resistant Starch", "Potassium", "Fiber"}, PrepTimeMin: 30,
+		},
+		{
+			ID: "44444444-0000-0000-0000-000000000007", Title: "Moong Dal Khichdi with Curd & Roasted Cumin", MealType: "Dinner",
+			PhaseTarget: "Menstrual", DietaryPreference: "Vegetarian",
+			Description: "Ayurvedic-inspired comfort meal of split yellow moong and fragrant rice cooked soft with a touch of cow's ghee and asafoetida. Extremely soothing during menstruation.",
+			KeyNutrients: []string{"Gentle Digestion", "Complete Protein", "Probiotics"}, PrepTimeMin: 20,
+		},
+		{
+			ID: "44444444-0000-0000-0000-000000000008", Title: "Roasted Makhana with Turmeric & Salt", MealType: "Snack",
+			PhaseTarget: "Any", DietaryPreference: "Vegetarian",
+			Description: "Crispy roasted foxnuts (lotus seeds) seasoned with clarifying turmeric, black pepper, and Himalayan pink rock salt.",
+			KeyNutrients: []string{"Magnesium", "Antioxidants", "Low Sodium", "Crunch"}, PrepTimeMin: 5,
+		},
+		{
+			ID: "44444444-0000-0000-0000-000000000009", Title: "Sprouted Moong Chaat with Pomegranate", MealType: "Snack",
+			PhaseTarget: "Any", DietaryPreference: "Vegetarian",
+			Description: "Live sprouted green gram tossed with diced cucumber, tomatoes, ruby pomegranate pearls, and fresh lime juice.",
+			KeyNutrients: []string{"Enzymes", "Vitamin C", "Folate", "Fiber"}, PrepTimeMin: 5,
+		},
+
+		// --- NON-VEGETARIAN INDIAN MEALS ---
+		{
+			ID: "44444444-0000-0000-0000-000000000010", Title: "Masala Egg Bhurji with Whole Wheat Toast", MealType: "Breakfast",
+			PhaseTarget: "Follicular", DietaryPreference: "Non-vegetarian",
+			Description: "Two free-range eggs scrambled Indian-style with finely diced onions, ripe tomatoes, green chilies, and fresh coriander.",
+			KeyNutrients: []string{"Complete Protein", "Choline", "B12", "Healthy Fats"}, PrepTimeMin: 12,
+			Items: []MealItemRecord{
+				{ID: "55555555-0000-0000-0000-000000000010", MealID: "44444444-0000-0000-0000-000000000010", FoodName: "Free-range Eggs", Portion: "2 large eggs", Category: "Poultry", SubstitutionOptions: []SubstitutionOption{{Name: "Paneer Bhurji", Reason: "Vegetarian swap"}, {Name: "Egg White Scramble", Reason: "Lower calorie"}}},
+			},
+		},
+		{
+			ID: "44444444-0000-0000-0000-000000000011", Title: "Homestyle Chicken Curry with Steamed Rice", MealType: "Lunch",
+			PhaseTarget: "Ovulatory", DietaryPreference: "Non-vegetarian",
+			Description: "Tender chicken breast pieces stewed in a light, aromatic ginger-garlic and tomato-onion gravy, served with steamed basmati rice and sliced kachumber.",
+			KeyNutrients: []string{"Lean Protein", "Heme Iron", "Niacin", "Zinc"}, PrepTimeMin: 35,
+			Items: []MealItemRecord{
+				{ID: "55555555-0000-0000-0000-000000000011", MealID: "44444444-0000-0000-0000-000000000011", FoodName: "Skinless Chicken Breast", Portion: "150g", Category: "Poultry", SubstitutionOptions: []SubstitutionOption{{Name: "Chicken Thigh", Reason: "Juicier texture"}, {Name: "Tofu in Curry", Reason: "Vegetarian swap"}}},
+			},
+		},
+		{
+			ID: "44444444-0000-0000-0000-000000000012", Title: "Tawa Spiced Fish with Mint Chutney & Salad", MealType: "Dinner",
+			PhaseTarget: "Luteal", DietaryPreference: "Non-vegetarian",
+			Description: "Fresh river or sea fish fillet marinated in carom seeds (ajwain), turmeric, and roasted cumin, lightly pan-seared and paired with fresh garden salad.",
+			KeyNutrients: []string{"Omega-3 Fatty Acids", "Lean Protein", "Iodine", "Selenium"}, PrepTimeMin: 20,
+		},
+		{
+			ID: "44444444-0000-0000-0000-000000000013", Title: "Egg Curry with Multigrain Bhakri", MealType: "Dinner",
 			PhaseTarget: "Menstrual", DietaryPreference: "Non-vegetarian",
-			Description: "Whole grain toast with mashed avocado, wild smoked salmon, and a sprinkle of hemp seeds.",
-			KeyNutrients: []string{"Omega-3", "Protein", "Healthy Fats"}, PrepTimeMin: 8,
-			Items: []MealItemRecord{
-				{ID: "55555555-0000-0000-0000-000000000006", MealID: "44444444-0000-0000-0000-000000000013", FoodName: "Wild Salmon Fillet", Portion: "120g", Category: "Fish/Protein", SubstitutionOptions: []SubstitutionOption{{Name: "Mackerel", Reason: "Omega-3 alternative"}, {Name: "Grilled Tempeh", Reason: "Fermented plant protein"}}},
-			},
+			Description: "Two hard-boiled eggs simmered in a spiced roasted coconut and onion gravy, served with nutrient-packed jowar-bajra bhakri.",
+			KeyNutrients: []string{"Protein", "Iron", "Healthy Fats", "Minerals"}, PrepTimeMin: 25,
 		},
-		// VEGAN
 		{
-			ID: "44444444-0000-0000-0000-000000000017", Title: "Chia Pudding with Mango & Hemp Hearts", MealType: "Breakfast",
-			PhaseTarget: "Menstrual", DietaryPreference: "Vegan",
-			Description: "Coconut-almond chia seed pudding topped with diced mango and hemp seeds.",
-			KeyNutrients: []string{"Omega-3", "Fiber", "Magnesium"}, PrepTimeMin: 5,
+			ID: "44444444-0000-0000-0000-000000000014", Title: "Masala Boiled Eggs with Spiced Chaat Salt", MealType: "Snack",
+			PhaseTarget: "Any", DietaryPreference: "Non-vegetarian",
+			Description: "Two boiled eggs halved and dusted with roasted cumin and chaat masala, served with mint leaves.",
+			KeyNutrients: []string{"Quick Protein", "Zero Added Sugar", "Choline"}, PrepTimeMin: 5,
 		},
 	}
 

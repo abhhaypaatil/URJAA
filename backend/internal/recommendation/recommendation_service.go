@@ -1,6 +1,7 @@
 package recommendation
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -99,6 +100,34 @@ func (s *Service) GenerateRecommendation(input EngineInput) *DailyRecommendation
 			rec.Workout = w
 			break
 		}
+	}
+
+	// Build transparent, accessible personalization rationale per §4.2
+	durationStr := fmt.Sprintf("%d minutes", input.PreferredDuration)
+	if input.PreferredDuration <= 0 {
+		durationStr = "15 minutes"
+	}
+	fitnessStr := input.FitnessLevel
+	if fitnessStr == "" {
+		fitnessStr = "Beginner"
+	}
+
+	if hasSevereCramps || (input.Phase == cycle.PhaseMenstrual && hasLowEnergy) {
+		reasonSymptom := input.Cramps
+		if reasonSymptom == "" {
+			reasonSymptom = "lower energy"
+		}
+		rec.PersonalizationReason = fmt.Sprintf("Suggested because you reported %s in your %s phase. Prioritizing gentle restorative movement to honor your recovery.", reasonSymptom, input.Phase)
+	} else if strings.Contains(strings.ToLower(input.Goal), "strength") {
+		rec.PersonalizationReason = fmt.Sprintf("Suggested because your goal is to build strength, tailored for %s-friendly progression with %s duration.", fitnessStr, durationStr)
+	} else if strings.Contains(strings.ToLower(input.Goal), "flexibility") || strings.Contains(strings.ToLower(input.Goal), "mobility") {
+		rec.PersonalizationReason = fmt.Sprintf("Suggested because you prefer mobility and flexibility, matching your %s available time.", durationStr)
+	} else {
+		rec.PersonalizationReason = fmt.Sprintf("Suggested because you prefer %s-friendly workouts and have %s available in your %s phase.", fitnessStr, durationStr, input.Phase)
+	}
+
+	if input.QuietMode {
+		rec.PersonalizationReason += " Configured with zero-jumping quiet mode for peaceful home practice."
 	}
 
 	return rec

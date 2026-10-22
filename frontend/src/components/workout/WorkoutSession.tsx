@@ -10,13 +10,18 @@ import {
   Volume2,
   VolumeX,
   Plus,
+  Video,
+  Sparkles,
 } from 'lucide-react';
 import { Workout, WorkoutExercise, Exercise } from '../../types';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
 import { ExerciseAnimation } from './ExerciseAnimations';
+import { IllustratedExerciseAvatar } from '../exercise/IllustratedExerciseAvatar';
 import { ExerciseReplaceModal } from './ExerciseReplaceModal';
 import { PostWorkoutModal } from './PostWorkoutModal';
+import { CloudinaryMedia } from '../media/CloudinaryMedia';
+import { getMediaForExercise } from '../../constants/mediaManifest';
 
 export type SessionState = 'PREPARING' | 'EXERCISE' | 'REST' | 'COMPLETE';
 
@@ -36,6 +41,8 @@ export const WorkoutSession: React.FC<WorkoutSessionProps> = ({
   const [sessionState, setSessionState] = useState<SessionState>('PREPARING');
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(false);
+  const [mediaMode, setMediaMode] = useState<'video' | 'animation'>('animation');
+  const [isModified, setIsModified] = useState<boolean>(false);
 
   // Timers and Rep Counters
   const [prepSeconds, setPrepSeconds] = useState<number>(5);
@@ -54,12 +61,15 @@ export const WorkoutSession: React.FC<WorkoutSessionProps> = ({
   const targetReps = currentItem?.target || 10;
   const targetSeconds = currentItem?.target_seconds || 30;
 
+  const currentMedia = getMediaForExercise(currentEx?.id, currentEx?.name, workout.category);
+
   // Initialize countdown on exercise change
   useEffect(() => {
     if (currentItem) {
       setExerciseSecondsLeft(currentItem.target_seconds || 30);
       setRestSecondsLeft(currentItem.rest_seconds || 20);
       setCurrentRepsDone(0);
+      setIsModified(false);
     }
   }, [currentIndex, currentItem]);
 
@@ -118,24 +128,19 @@ export const WorkoutSession: React.FC<WorkoutSessionProps> = ({
   };
 
   const handleNextExercise = () => {
-    if (currentIndex < exercisesList.length - 1) {
-      setCurrentIndex((i) => i + 1);
-      setSessionState('EXERCISE');
-    } else {
-      setSessionState('COMPLETE');
-      setIsPostWorkoutOpen(true);
-    }
+    setSessionState('EXERCISE');
+    setCurrentIndex((prev) => prev + 1);
   };
 
   const handlePreviousExercise = () => {
     if (currentIndex > 0) {
-      setCurrentIndex((i) => i - 1);
+      setCurrentIndex((prev) => prev - 1);
       setSessionState('EXERCISE');
     }
   };
 
   const handleSkipExercise = () => {
-    handleNextExercise();
+    handleExerciseComplete();
   };
 
   const handleAddRep = () => {
@@ -147,37 +152,40 @@ export const WorkoutSession: React.FC<WorkoutSessionProps> = ({
   };
 
   const handleExerciseReplaced = (newExercise: Exercise) => {
-    const updated = [...exercisesList];
-    updated[currentIndex] = {
-      ...updated[currentIndex],
-      exercise: newExercise,
-      exercise_id: newExercise.id,
-      mode: newExercise.type,
-      target: newExercise.default_reps,
-      target_seconds: newExercise.default_duration_seconds,
-    };
-    setExercisesList(updated);
-    setExerciseSecondsLeft(newExercise.default_duration_seconds);
-    setCurrentRepsDone(0);
+    setExercisesList((prev) => {
+      const updated = [...prev];
+      updated[currentIndex] = {
+        ...updated[currentIndex],
+        exercise_id: newExercise.id,
+        exercise: newExercise,
+      };
+      return updated;
+    });
+    setIsReplaceOpen(false);
   };
 
+  // Progress Percentage
+  const progressPercent = Math.round(((currentIndex + (sessionState === 'REST' ? 1 : 0)) / exercisesList.length) * 100);
+
   return (
-    <div className="fixed inset-0 z-50 bg-white dark:bg-slate-950 flex flex-col justify-between overflow-hidden select-none">
-      {/* Top Header Bar */}
-      <div className="px-5 py-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onExit}
-            className="p-2 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
-            title="Exit session"
-          >
-            <X className="w-5 h-5" />
-          </button>
-          <div>
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-none">
-              {workout.title}
-            </h3>
-            <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 inline-block">
+    <div className="fixed inset-0 z-50 bg-ivory-50 dark:bg-slate-950 flex flex-col justify-between overflow-hidden">
+      {/* Top Session Action Bar */}
+      <div className="px-4 py-3.5 border-b border-plum-100/70 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex items-center justify-between">
+        <button
+          type="button"
+          onClick={onExit}
+          className="p-2 rounded-xl text-plum-600 hover:text-plum-950 dark:text-slate-400 dark:hover:text-white hover:bg-ivory-100 dark:hover:bg-slate-800 transition-colors"
+          title="Exit workout"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <div className="flex flex-col items-center">
+          <span className="text-xs font-bold text-plum-950 dark:text-white">
+            {workout.title}
+          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-plum-500 dark:text-slate-500 mt-0.5 inline-block">
               {sessionState === 'REST' ? 'Resting' : `Exercise ${currentIndex + 1} of ${exercisesList.length}`}
             </span>
           </div>
@@ -186,11 +194,11 @@ export const WorkoutSession: React.FC<WorkoutSessionProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsMuted(!isMuted)}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+            className="p-2 rounded-xl text-plum-600 hover:text-plum-950 dark:text-slate-400 dark:hover:text-slate-200"
           >
             {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
           </button>
-          <Badge variant="rose" size="sm">
+          <Badge variant="blush" size="sm">
             {Math.floor(totalWorkoutDuration / 60)}:
             {String(totalWorkoutDuration % 60).padStart(2, '0')}
           </Badge>
@@ -198,21 +206,21 @@ export const WorkoutSession: React.FC<WorkoutSessionProps> = ({
       </div>
 
       {/* Main Interactive Stage */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-lg mx-auto w-full">
+      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-lg mx-auto w-full overflow-y-auto">
         {/* PREPARING SCREEN */}
         {sessionState === 'PREPARING' && (
           <div className="flex flex-col items-center animate-fade-in">
-            <span className="text-xs font-bold uppercase tracking-widest text-rose-500 mb-2">
+            <span className="text-xs font-bold uppercase tracking-widest text-blush-600 dark:text-blush-400 mb-2">
               Get Ready
             </span>
-            <div className="w-24 h-24 rounded-full bg-rose-50 dark:bg-rose-950/80 border-4 border-rose-500 flex items-center justify-center text-4xl font-extrabold text-rose-600 dark:text-rose-400 my-4 shadow-rose-glow">
+            <div className="w-24 h-24 rounded-full bg-blush-50 dark:bg-rose-950/80 border-4 border-blush-500 flex items-center justify-center text-4xl font-extrabold text-blush-600 dark:text-rose-400 my-4 shadow-soft">
               {prepSeconds}
             </div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mt-2">
+            <h2 className="text-2xl font-bold text-plum-950 dark:text-white mt-2">
               {currentEx?.name || 'First Movement'}
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mt-1">
-              Take a deep breath and find your comfortable space.
+            <p className="text-xs text-plum-600 dark:text-slate-400 max-w-xs mt-1">
+              Take a deep breath and settle into your comfortable space.
             </p>
           </div>
         )}
@@ -220,16 +228,74 @@ export const WorkoutSession: React.FC<WorkoutSessionProps> = ({
         {/* ACTIVE EXERCISE SCREEN */}
         {sessionState === 'EXERCISE' && (
           <div className="flex flex-col items-center w-full">
-            {/* SVG Looping Animation Archetype */}
-            <div className="my-2 p-4 bg-warm-50/80 dark:bg-slate-900/50 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-inner">
-              <ExerciseAnimation
-                type={currentEx?.animation_type || 'squat_pattern'}
-                className="w-44 h-44"
-                isPaused={isPaused}
-              />
+            {/* Media Visual Stage */}
+            <div className="my-2 w-full max-w-sm">
+              {mediaMode === 'video' && currentMedia ? (
+                <div className="rounded-3xl overflow-hidden border border-plum-100/70 dark:border-slate-800 shadow-soft">
+                  <CloudinaryMedia
+                    assetKey={currentMedia.assetKey}
+                    aspectRatio="16:9"
+                    animationArchetype={currentEx?.animation_type}
+                    containerClassName="w-full max-h-56"
+                    customFallback={
+                      <IllustratedExerciseAvatar
+                        movementType={currentEx?.animation_type || 'squat_pattern'}
+                        exerciseName={currentEx?.name || 'Movement'}
+                        isPlaying={!isPaused}
+                        isModified={isModified}
+                      />
+                    }
+                  />
+                </div>
+              ) : (
+                <div className="rounded-3xl overflow-hidden border border-plum-100/60 dark:border-slate-800 shadow-soft">
+                  <IllustratedExerciseAvatar
+                    movementType={currentEx?.animation_type || 'squat_pattern'}
+                    exerciseName={currentEx?.name || 'Movement'}
+                    isPlaying={!isPaused}
+                    isModified={isModified}
+                  />
+                </div>
+              )}
+
+              {/* Modification & Media Switcher Controls */}
+              <div className="flex flex-wrap items-center justify-center gap-2 mt-2.5">
+                <button
+                  type="button"
+                  onClick={() => setIsModified((prev) => !prev)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold border transition-all ${
+                    isModified
+                      ? 'bg-urjaa-pistachio/40 border-urjaa-pistachio text-plum-950 font-bold'
+                      : 'bg-ivory-100 dark:bg-slate-800 text-plum-700 dark:text-slate-300 border-plum-200/50'
+                  }`}
+                >
+                  <Sparkles className="w-3 h-3 text-urjaa-rose" />
+                  <span>{isModified ? 'Low-Impact Form Active' : 'Low-Impact Form'}</span>
+                </button>
+
+                {currentMedia && (
+                  <button
+                    type="button"
+                    onClick={() => setMediaMode(mediaMode === 'video' ? 'animation' : 'video')}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-ivory-100 hover:bg-blush-50 text-plum-700 dark:bg-slate-800 dark:text-slate-300 border border-plum-200/50 transition-colors"
+                  >
+                    {mediaMode === 'video' ? (
+                      <>
+                        <Sparkles className="w-3 h-3 text-blush-500" />
+                        <span>Illustrated Avatar</span>
+                      </>
+                    ) : (
+                      <>
+                        <Video className="w-3 h-3 text-blush-500" />
+                        <span>Cloudinary Video</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
 
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mt-3">
+            <h2 className="text-2xl font-bold text-plum-950 dark:text-white mt-2">
               {currentEx?.name || 'Exercise'}
             </h2>
 
@@ -239,14 +305,14 @@ export const WorkoutSession: React.FC<WorkoutSessionProps> = ({
                 <span className="text-5xl font-black text-rose-600 dark:text-rose-400 tracking-tight font-mono">
                   {exerciseSecondsLeft}s
                 </span>
-                <span className="text-xs text-slate-400 mt-1">Time Remaining</span>
+                <span className="text-xs text-plum-500 mt-1">Time Remaining</span>
               </div>
             ) : (
               <div className="flex flex-col items-center my-3">
-                <span className="text-5xl font-black text-slate-900 dark:text-white tracking-tight font-mono">
-                  {currentRepsDone} <span className="text-2xl text-slate-400">/ {targetReps}</span>
+                <span className="text-5xl font-black text-plum-950 dark:text-white tracking-tight font-mono">
+                  {currentRepsDone} <span className="text-2xl text-plum-400">/ {targetReps}</span>
                 </span>
-                <span className="text-xs text-slate-400 mt-1">Reps Completed</span>
+                <span className="text-xs text-plum-500 mt-1">Reps Completed</span>
               </div>
             )}
 
@@ -255,50 +321,52 @@ export const WorkoutSession: React.FC<WorkoutSessionProps> = ({
               <button
                 type="button"
                 onClick={handleAddRep}
-                className="my-2 px-8 py-3.5 rounded-2xl bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-bold text-base shadow-soft flex items-center gap-2 transition-all"
+                className="my-2 px-8 py-3.5 rounded-2xl bg-blush-500 hover:bg-blush-600 active:scale-95 text-white font-bold text-base shadow-soft flex items-center gap-2 transition-all"
               >
                 <Plus className="w-5 h-5 stroke-[3]" />
-                <span>Count Rep (+1)</span>
+                <span>+1 Rep Completed</span>
               </button>
             )}
 
-            {/* Replace Exercise Button */}
-            <button
-              type="button"
-              onClick={() => setIsReplaceOpen(true)}
-              className="mt-2 inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-rose-600 transition-colors"
-            >
-              <ArrowLeftRight className="w-3.5 h-3.5" />
-              <span>Replace movement (Easier / Harder / Quiet)</span>
-            </button>
+            {/* In-Session Replace Link */}
+            <div className="mt-3 flex items-center gap-4 text-xs">
+              <button
+                type="button"
+                onClick={() => setIsReplaceOpen(true)}
+                className="inline-flex items-center gap-1 text-plum-600 hover:text-blush-600 dark:text-slate-400 dark:hover:text-rose-400 transition-colors"
+              >
+                <ArrowLeftRight className="w-3.5 h-3.5" />
+                <span>Swap Exercise</span>
+              </button>
+            </div>
           </div>
         )}
 
         {/* REST SCREEN */}
         {sessionState === 'REST' && (
           <div className="flex flex-col items-center w-full animate-fade-in">
-            <span className="text-xs font-bold uppercase tracking-widest text-sapphire-600 dark:text-sapphire-400 mb-1">
-              Rest & Breathe
+            <span className="text-xs font-bold uppercase tracking-widest text-skyblue-600 dark:text-skyblue-400 mb-2">
+              Rest & Hydrate
             </span>
-            <div className="w-24 h-24 rounded-full bg-sapphire-50 dark:bg-sapphire-950/80 border-4 border-sapphire-500 flex items-center justify-center text-4xl font-extrabold text-sapphire-600 dark:text-sapphire-400 my-4 shadow-sapphire-glow">
+            <div className="w-28 h-28 rounded-full bg-skyblue-50 dark:bg-sky-950/80 border-4 border-skyblue-400 flex items-center justify-center text-4xl font-extrabold text-skyblue-600 dark:text-sky-300 my-4 shadow-soft">
               {restSecondsLeft}s
             </div>
 
-            <button
-              type="button"
-              onClick={() => setRestSecondsLeft(0)}
-              className="text-xs font-semibold px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-all mb-6"
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleNextExercise}
+              className="mt-2 text-xs"
             >
-              Skip Rest (+0s)
-            </button>
+              Skip Rest & Begin
+            </Button>
 
-            {/* Next Exercise Preview */}
-            {currentIndex < exercisesList.length - 1 && (
-              <div className="w-full p-4 rounded-2xl bg-warm-100/80 dark:bg-slate-900 border border-warm-200 dark:border-slate-800 text-left">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Next Exercise ({currentIndex + 2}/{exercisesList.length})
+            {currentIndex + 1 < exercisesList.length && (
+              <div className="mt-6 p-4 rounded-2xl bg-ivory-100/90 dark:bg-slate-900 border border-plum-100/60 dark:border-slate-800 text-center max-w-xs w-full">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-plum-500">
+                  Coming Up Next
                 </span>
-                <h4 className="text-sm font-semibold text-slate-900 dark:text-white mt-0.5">
+                <h4 className="text-sm font-semibold text-plum-950 dark:text-white mt-0.5">
                   {exercisesList[currentIndex + 1]?.exercise?.name || 'Next movement'}
                 </h4>
               </div>
@@ -308,13 +376,13 @@ export const WorkoutSession: React.FC<WorkoutSessionProps> = ({
       </div>
 
       {/* Bottom Workout Controller */}
-      <div className="px-6 py-5 border-t border-slate-100 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md">
+      <div className="px-6 py-5 border-t border-plum-100/70 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md">
         <div className="max-w-md mx-auto flex items-center justify-between">
           <button
             type="button"
             onClick={handlePreviousExercise}
             disabled={currentIndex === 0}
-            className="p-3 rounded-2xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:pointer-events-none transition-all"
+            className="p-3 rounded-2xl text-plum-600 dark:text-slate-400 hover:bg-ivory-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:pointer-events-none transition-all"
             title="Previous exercise"
           >
             <RotateCcw className="w-5 h-5" />
@@ -323,7 +391,7 @@ export const WorkoutSession: React.FC<WorkoutSessionProps> = ({
           <button
             type="button"
             onClick={() => setIsPaused(!isPaused)}
-            className="p-4 rounded-3xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md hover:scale-105 active:scale-95 transition-all"
+            className="p-4 rounded-3xl bg-plum-950 dark:bg-white text-white dark:text-plum-950 shadow-md hover:scale-105 active:scale-95 transition-all"
             title={isPaused ? 'Resume' : 'Pause'}
           >
             {isPaused ? <Play className="w-6 h-6 fill-current" /> : <Pause className="w-6 h-6 fill-current" />}
@@ -332,7 +400,7 @@ export const WorkoutSession: React.FC<WorkoutSessionProps> = ({
           <button
             type="button"
             onClick={handleSkipExercise}
-            className="p-3 rounded-2xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+            className="p-3 rounded-2xl text-plum-600 dark:text-slate-400 hover:bg-ivory-100 dark:hover:bg-slate-800 transition-all"
             title="Next or Skip exercise"
           >
             <SkipForward className="w-5 h-5" />
