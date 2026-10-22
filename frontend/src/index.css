@@ -5,10 +5,44 @@
 @layer base {
   html {
     -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply antialiased bg-warm-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 selection:bg-rose-500/20 selection:text-rose-900;
+  }
+
+  /* Clean, subtle modern scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.35);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.55);
   }
 }
 
-/* Custom Workout SVG Keyframe Animations per §8.4 */
+/* Semi-Professional Lifestyle Surface Primitives */
+.lifestyle-card {
+  @apply bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl shadow-soft transition-all duration-200;
+}
+
+.lifestyle-card:hover {
+  @apply shadow-card-hover border-slate-300/80 dark:border-slate-700/80;
+}
+
+.lifestyle-card-flat {
+  @apply bg-slate-50/80 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800/60 rounded-3xl;
+}
+
+/* Custom Workout SVG Keyframe Animations (Guided Movement Engine) */
 @keyframes squatAnim {
   0%, 100% {
     transform: translateY(0) scaleY(1);
@@ -90,4 +124,16 @@
 .animate-stretch {
   animation: stretchAnim 3.5s ease-in-out infinite;
   transform-origin: center bottom;
+}
+
+/* Reduced motion preference support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

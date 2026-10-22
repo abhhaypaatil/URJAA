@@ -254,3 +254,68 @@ export interface MonthSummary {
   overall_consistency_score: number;
   supportive_streak_message: string;
 }
+
+
+// ==========================================
+// AVATAR STUDIO & DIGITAL IDENTITY
+// ==========================================
+
+export type AvatarStyle = 'celestial' | 'cybernetic' | 'bioluminescent' | 'ethereal';
+export type AvatarAuraColor = 'rose' | 'sapphire' | 'violet' | 'amber' | 'emerald';
+export type AvatarGlowIntensity = 'soft' | 'radiant' | 'hyper';
+
+export interface UserAvatar {
+  id: string;
+  sourceImage?: string; // Data URL or uploaded preview
+  generatedAvatarUrl?: string; // Rendered / styled avatar
+  style: AvatarStyle;
+  auraColor: AvatarAuraColor;
+  energyLevel: number; // 0 - 100
+  title: string; // e.g. "Cosmic Voyager", "Solar Alchemist", "Harmonic Seeker"
+  glowIntensity: AvatarGlowIntensity;
+  createdAt: string;
+}
+
+// ==========================================
+// INTELLIGENT AI COMPANION
+// ==========================================
+
+export interface CompanionMessage {
+  id: string;
+  sender: 'user' | 'companion' | 'system';
+  text: string;
+  timestamp: string;
+  suggestedActions?: {
+    label: string;
+    route?: string;
+    actionKey?: string;
+  }[];
+  phaseContext?: PhaseType;
+}
+
+export interface CompanionPersona {
+  name: string;
+  role: string;
+  currentThought: string;
+  energyFrequency: number;
+  activeFocus: string;
+}
+
+// ==========================================
+// MY UNIVERSE SPATIAL DESTINATIONS
+// ==========================================
+
+export interface UniversePortal {
+  id: string;
+  name: string;
+  title: string;
+  tagline: string;
+  route: string;
+  iconName: string;
+  accentColor: string;
+  glowColor: string;
+  statusBadge: string;
+  progressPercent: number;
+  environmentName: string;
+  coordinates: { x: number; y: number }; // normalized orbital angle/radius
+}

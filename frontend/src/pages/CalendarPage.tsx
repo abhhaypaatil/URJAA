@@ -5,15 +5,14 @@ import { MonthGrid } from '../components/calendar/MonthGrid';
 import { CalendarFilterPills } from '../components/calendar/CalendarFilterPills';
 import { DayDetailPanel } from '../components/calendar/DayDetailPanel';
 import { PeriodLoggerModal } from '../components/cycle/PeriodLoggerModal';
-import { Card } from '../components/common/Card';
 import { Skeleton } from '../components/common/Skeleton';
 import { ErrorState } from '../components/common/ErrorState';
 import {
   Calendar as CalendarIcon,
   Flame,
   CheckCircle2,
-  Droplet,
   Sparkles,
+  Zap,
 } from 'lucide-react';
 
 export const CalendarPage: React.FC = () => {
@@ -75,65 +74,78 @@ export const CalendarPage: React.FC = () => {
   const selectedDayObj = summary?.days.find((d) => d.date === selectedDate) || summary?.days[0];
 
   return (
-    <div className="space-y-6">
-      {/* Header & Filter Pills */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div className="space-y-6 animate-in fade-in duration-300">
+      {/* Top Header Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400">
-            <CalendarIcon className="w-3.5 h-3.5" />
-            <span>Visual Rhythm History</span>
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">
+            <CalendarIcon className="w-4 h-4 text-sapphire-600 dark:text-sapphire-400" />
+            <span className="uppercase tracking-wider font-mono text-[11px]">Monthly Rhythm & Consistency</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-slate-900 dark:text-white mt-0.5">
-            Your Monthly Story
+          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-slate-900 dark:text-white tracking-tight">
+            Habit & Cycle Calendar
           </h1>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xl">
+            A unified view of your workouts, nutrition, cycle days, and wellness check-ins across the month.
+          </p>
         </div>
 
         {/* Streaks & Consistency Pill Bar */}
         {summary && (
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs shadow-sm">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-              <span className="font-bold text-slate-800 dark:text-slate-200">
-                {summary.checkin_streak_days}d
-              </span>
-              <span className="text-slate-400">check-in</span>
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs shadow-sm">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              <div>
+                <span className="font-bold text-slate-800 dark:text-white block">{summary.checkin_streak_days}d</span>
+                <span className="text-[10px] text-slate-400">check-in</span>
+              </div>
             </div>
 
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs shadow-sm">
-              <Flame className="w-3.5 h-3.5 text-rose-500" />
-              <span className="font-bold text-slate-800 dark:text-slate-200">
-                {summary.workout_streak_days}d
-              </span>
-              <span className="text-slate-400">workout</span>
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs shadow-sm">
+              <Flame className="w-4 h-4 text-rose-500" />
+              <div>
+                <span className="font-bold text-slate-800 dark:text-white block">{summary.workout_streak_days}d</span>
+                <span className="text-[10px] text-slate-400">workout</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs shadow-sm">
+              <Zap className="w-4 h-4 text-amber-500" />
+              <div>
+                <span className="font-bold text-slate-800 dark:text-white block">{summary.overall_consistency_score}%</span>
+                <span className="text-[10px] text-slate-400">harmony</span>
+              </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Filter Selector Row (§10) */}
+      {/* Filter Selector Row */}
       <CalendarFilterPills
         activeFilter={activeFilter}
         onSelectFilter={(f) => setActiveFilter(f)}
       />
 
-      {/* Supportive Streak Notification (§10) */}
+      {/* Supportive Streak Notification Banner */}
       {summary?.supportive_streak_message && (
-        <div className="p-3.5 rounded-2xl bg-gradient-to-r from-rose-50/90 to-sapphire-50/90 dark:from-slate-900 dark:to-slate-900 border border-rose-100 dark:border-slate-800 flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-300">
-          <Sparkles className="w-4 h-4 text-rose-500 shrink-0" />
+        <div className="p-4 rounded-2xl bg-warm-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center gap-3 text-xs text-slate-700 dark:text-slate-200 shadow-sm">
+          <div className="w-8 h-8 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+            <Sparkles className="w-4 h-4" />
+          </div>
           <span>{summary.supportive_streak_message}</span>
         </div>
       )}
 
       {isLoading && !summary ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-pulse">
-          <Skeleton className="h-96 rounded-3xl lg:col-span-8" />
-          <Skeleton className="h-96 rounded-3xl lg:col-span-4" />
+          <Skeleton className="h-96 rounded-3xl lg:col-span-8 bg-warm-200 dark:bg-slate-800" />
+          <Skeleton className="h-96 rounded-3xl lg:col-span-4 bg-warm-200 dark:bg-slate-800" />
         </div>
       ) : error ? (
         <ErrorState message={error} onRetry={loadCalendar} />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Main 7-Column Month Grid (8 cols on desktop) */}
+          {/* Main 7-Column Month Grid */}
           <div className="lg:col-span-8">
             <MonthGrid
               currentMonth={currentMonth}
@@ -147,7 +159,7 @@ export const CalendarPage: React.FC = () => {
             />
           </div>
 
-          {/* Day Detail Side Panel (4 cols on desktop) */}
+          {/* Day Detail Side Panel */}
           <div className="lg:col-span-4 sticky top-20">
             <DayDetailPanel
               day={selectedDayObj}

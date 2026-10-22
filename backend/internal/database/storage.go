@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 	"urjaa-backend/internal/models"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 func contextWithTimeout(d time.Duration) (context.Context, context.CancelFunc) {
@@ -97,16 +99,16 @@ type WorkoutExerciseMapping struct {
 }
 
 type WorkoutSessionRecord struct {
-	ID              string    `json:"id"`
-	UserID          string    `json:"user_id"`
-	WorkoutID       string    `json:"workout_id"`
-	WorkoutTitle    string    `json:"workout_title"`
-	Status          string    `json:"status"` // COMPLETED, SKIPPED, IN_PROGRESS
-	DurationSeconds int       `json:"duration_seconds"`
-	CompletionRate  float64   `json:"completion_rate"`
-	PerceivedEffort string    `json:"perceived_effort"`
-	ScheduledDate   string    `json:"scheduled_date"`
-	StartedAt       time.Time `json:"started_at"`
+	ID              string     `json:"id"`
+	UserID          string     `json:"user_id"`
+	WorkoutID       string     `json:"workout_id"`
+	WorkoutTitle    string     `json:"workout_title"`
+	Status          string     `json:"status"` // COMPLETED, SKIPPED, IN_PROGRESS
+	DurationSeconds int        `json:"duration_seconds"`
+	CompletionRate  float64    `json:"completion_rate"`
+	PerceivedEffort string     `json:"perceived_effort"`
+	ScheduledDate   string     `json:"scheduled_date"`
+	StartedAt       time.Time  `json:"started_at"`
 	CompletedAt     *time.Time `json:"completed_at,omitempty"`
 }
 
@@ -127,9 +129,69 @@ func NewMemoryStorage() *MemoryStorage {
 	}
 }
 
+func (s *MemoryStorage) seedDemoUser() {
+	demoUserID := "11111111-0000-0000-0000-000000000001"
+	demoEmail := "demo@urjaa.world"
+	hash, err := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
+	if err != nil {
+		hash = []byte("$2a$10$wN1F9f1/h5jV1.xYJjVd2uX7.qV9yJqY5zY5zY5zY5zY5zY5zY5zY")
+	}
+
+	user := &models.User{
+		ID:           demoUserID,
+		Email:        demoEmail,
+		PasswordHash: string(hash),
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+
+	profile := &models.UserProfile{
+		UserID:                   demoUserID,
+		Name:                     "Maya",
+		WellnessGoal:             "Hormonal Balance & Gentle Energy",
+		FitnessLevel:             "Beginner",
+		PreferredWorkoutDuration: 15,
+		DietaryPreference:        "Vegetarian",
+		ExerciseLimitations:      []string{},
+		PCOSPCODMode:             false,
+		UpdatedAt:                time.Now(),
+	}
+
+	prefs := &models.UserPreferences{
+		UserID:          demoUserID,
+		ThemePreference: "system",
+		QuietMode:       true,
+		NotifyPeriod:    true,
+		NotifyCheckin:   true,
+		NotifyHydration: true,
+		NotifyWorkout:   true,
+		NotifyNutrition: true,
+		NotifyInsights:  true,
+		UpdatedAt:       time.Now(),
+	}
+
+	cycleSettings := &models.CycleSettings{
+		UserID:          demoUserID,
+		LastPeriodStart: time.Now().AddDate(0, 0, -9).Format("2006-01-02"),
+		PeriodDuration:  5,
+		AvgCycleLength:  29,
+		IsRegular:       true,
+		UpdatedAt:       time.Now(),
+	}
+
+	s.Users[demoUserID] = user
+	s.UsersByEmail[demoEmail] = user
+	s.Profiles[demoUserID] = profile
+	s.Preferences[demoUserID] = prefs
+	s.CycleSettings[demoUserID] = cycleSettings
+}
+
 func (s *MemoryStorage) SeedDefaultData() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	// Seed Demo User (Maya - demo@urjaa.world)
+	s.seedDemoUser()
 
 	// Seed 50+ Exercises
 	s.seedExercises()

@@ -8,6 +8,8 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { OnboardingPage } from './pages/OnboardingPage';
 import { HomePage } from './pages/HomePage';
+import { AvatarStudioPage } from './pages/AvatarStudioPage';
+import { CompanionPage } from './pages/CompanionPage';
 import { CyclePage } from './pages/CyclePage';
 import { CheckinPage } from './pages/CheckinPage';
 import { NutritionPage } from './pages/NutritionPage';
@@ -23,8 +25,9 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-warm-50 dark:bg-slate-950 flex items-center justify-center">
-        <div className="w-8 h-8 rounded-full border-2 border-rose-500 border-t-transparent animate-spin" />
+      <div className="min-h-screen bg-warm-50 dark:bg-slate-950 flex flex-col items-center justify-center space-y-4">
+        <div className="w-10 h-10 rounded-full border-2 border-rose-500 border-t-transparent animate-spin" />
+        <span className="text-xs font-mono text-slate-500 dark:text-slate-400">Loading Urjaa...</span>
       </div>
     );
   }
@@ -73,6 +76,9 @@ export const App: React.FC = () => {
         }
       >
         <Route path="/home" element={<HomePage />} />
+        <Route path="/universe" element={<Navigate to="/home" replace />} />
+        <Route path="/avatar-studio" element={<AvatarStudioPage />} />
+        <Route path="/companion" element={<CompanionPage />} />
         <Route path="/cycle" element={<CyclePage />} />
         <Route path="/check-in" element={<CheckinPage />} />
         <Route path="/nutrition" element={<NutritionPage />} />
