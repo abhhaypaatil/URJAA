@@ -5,20 +5,18 @@ import { Card } from '../common/Card';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
 import { CloudinaryMedia } from '../media/CloudinaryMedia';
-import { CheckCircle2, Sparkles, ArrowRight, Compass, Play, RotateCcw } from 'lucide-react';
+import { CheckCircle2, Sparkles, ArrowRight, Compass, Play } from 'lucide-react';
 
 interface DailyQuestsSectionProps {
   quests: Quest[];
   onCompleteQuest: (questId: string) => void;
   onOpenExercise?: (quest: Quest) => void;
-  onSwapQuest?: (questId: string) => void;
 }
 
 export const DailyQuestsSection: React.FC<DailyQuestsSectionProps> = ({
   quests,
   onCompleteQuest,
   onOpenExercise,
-  onSwapQuest,
 }) => {
   const navigate = useNavigate();
 
@@ -135,19 +133,7 @@ export const DailyQuestsSection: React.FC<DailyQuestsSectionProps> = ({
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1.5 sm:gap-2">
-                    {onSwapQuest && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => onSwapQuest(quest.id)}
-                        className="text-xs px-2 py-1 text-plum-600 dark:text-slate-400 hover:text-blush-600"
-                        title="Swap for a gentle alternative (no guilt or XP loss)"
-                      >
-                        <RotateCcw className="w-3 h-3 sm:mr-1" />
-                        <span className="hidden sm:inline">Swap</span>
-                      </Button>
-                    )}
+                  <div className="flex items-center gap-2">
                     {isMovement && onOpenExercise ? (
                       <Button
                         size="sm"

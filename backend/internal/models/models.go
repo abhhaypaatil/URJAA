@@ -121,7 +121,7 @@ type DailyCheckin struct {
 	UpdatedAt          time.Time `json:"updated_at"`
 }
 
-// Gamification Models (Stage 5 & Stage 6)
+// Gamification Models (Stage 5)
 type Quest struct {
 	ID          string `json:"id"`
 	Title       string `json:"title"`
@@ -139,29 +139,16 @@ type Quest struct {
 	AssetKey    string `json:"asset_key,omitempty"`
 }
 
-type Achievement struct {
-	ID          string `json:"id"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	Category    string `json:"category"` // quest, movement, mindfulness, strength, consistency, level
-	Icon        string `json:"icon"`
-	Unlocked    bool   `json:"unlocked"`
-	UnlockedAt  string `json:"unlocked_at,omitempty"`
-	Progress    int    `json:"progress"`
-	MaxProgress int    `json:"max_progress"`
-}
-
 type GamificationState struct {
-	UserID         string         `json:"user_id"`
-	Level          int            `json:"level"`
-	LevelTitle     string         `json:"level_title"`
-	CurrentXP      int            `json:"current_xp"`
-	XPForNextLevel int            `json:"xp_for_next_level"`
-	TotalXPEarned  int            `json:"total_xp_earned"`
-	StreakDays     int            `json:"streak_days"`
-	Quests         []*Quest       `json:"quests"`
-	Achievements   []*Achievement `json:"achievements"`
-	LastActiveDate string         `json:"last_active_date"`
+	UserID         string   `json:"user_id"`
+	Level          int      `json:"level"`
+	LevelTitle     string   `json:"level_title"`
+	CurrentXP      int      `json:"current_xp"`
+	XPForNextLevel int      `json:"xp_for_next_level"`
+	TotalXPEarned  int      `json:"total_xp_earned"`
+	StreakDays     int      `json:"streak_days"`
+	Quests         []*Quest `json:"quests"`
+	LastActiveDate string   `json:"last_active_date"`
 }
 
 // Medical & Wellness Disclaimer Constant (Single source of truth per §9)

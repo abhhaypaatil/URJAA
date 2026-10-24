@@ -103,9 +103,6 @@ export const api = {
   exportData: () =>
     request<any>('/profile/export'),
 
-  clearPersonalization: () =>
-    request<any>('/profile/clear-personalization', { method: 'POST' }),
-
   deleteAccount: () =>
     request<any>('/profile', { method: 'DELETE' }),
 
@@ -116,15 +113,12 @@ export const api = {
   updateSettings: (body: any) =>
     request<any>('/settings', { method: 'PUT', body: JSON.stringify(body) }),
 
-  // Gamification (Stage 5 & Stage 6)
+  // Gamification (Stage 5)
   getGamification: () =>
     request<any>('/gamification'),
 
   completeQuest: (questId: string) =>
     request<any>(`/gamification/quests/${questId}/complete`, { method: 'POST' }),
-
-  swapQuest: (questId: string) =>
-    request<any>(`/gamification/quests/${questId}/swap`, { method: 'POST' }),
 
   // Cycle
   getCurrentCycle: () =>

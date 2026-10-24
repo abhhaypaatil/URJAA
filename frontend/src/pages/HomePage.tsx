@@ -18,8 +18,6 @@ import {
 import {
   getGamificationState,
   completeQuest,
-  swapQuestLocal,
-  saveGamificationState,
   GamificationState,
 } from '../services/gamificationService';
 
@@ -30,7 +28,6 @@ import { RecentActivitySummary } from '../components/dashboard/RecentActivitySum
 import { CompanionPresenceCard } from '../components/companion/CompanionPresenceCard';
 import { UserAvatarBadge } from '../components/avatar/UserAvatarBadge';
 import { ExerciseDetailModal } from '../components/exercise/ExerciseDetailModal';
-import { AchievementsModal } from '../components/dashboard/AchievementsModal';
 
 import { PhaseBadge } from '../components/cycle/PhaseBadge';
 import { CycleRing } from '../components/cycle/CycleRing';
@@ -206,10 +203,10 @@ export const HomePage: React.FC = () => {
         setTodayMeals(nutData.meals);
       }
 
-      // 5. Server-backed Gamification & Daily Quests (Stage 5 & Stage 6)
+      // 5. Server-backed Gamification & Daily Quests (Stage 5)
       const serverGam = await api.getGamification().catch(() => null);
       if (serverGam && serverGam.quests && serverGam.quests.length > 0) {
-        const mappedState: GamificationState = {
+        setGamification({
           level: serverGam.level || 1,
           levelTitle: serverGam.level_title || 'Gentle Spark',
           currentXp: serverGam.current_xp || 0,
@@ -228,11 +225,8 @@ export const HomePage: React.FC = () => {
             actionLabel: q.action_label,
             actionRoute: q.action_route,
           })),
-          achievements: serverGam.achievements || [],
           lastActiveDate: serverGam.last_active_date || new Date().toISOString().split('T')[0],
-        };
-        setGamification(mappedState);
-        saveGamificationState(mappedState, user?.id);
+        });
       }
     } catch (err: any) {
       console.warn('Notice loading dashboard updates:', err);
@@ -246,6 +240,11 @@ export const HomePage: React.FC = () => {
     }
     loadDashboardData();
   }, [hasSettings, user]);
+
+  // Synchronize gamification state when user changes
+  useEffect(() => {
+    setGamification(getGamificationState(user?.id));
+  }, [user?.id]);
 
   const handleQuestCompleted = async (questId: string) => {
     // 1. Attempt server-side gamification completion first
@@ -272,29 +271,20 @@ export const HomePage: React.FC = () => {
             actionLabel: q.action_label,
             actionRoute: q.action_route,
           })),
-          achievements: s.achievements || [],
           lastActiveDate: s.last_active_date,
         };
         setGamification(mappedState);
-        saveGamificationState(mappedState, user?.id);
-
         if (res.earned_xp > 0) {
-          setToastMessage(
-            res.leveled_up
-              ? `🎉 Level Up! You reached Level ${res.state.level} • ${res.state.level_title}!`
-              : `✨ Quest Complete! Earned +${res.earned_xp} XP`
-          );
-        } else {
-          setToastMessage("✨ Quest already completed for today!");
+          setToastMessage(`✨ Quest Complete! Earned +${res.earned_xp} XP`);
+          setTimeout(() => setToastMessage(null), 3500);
+          return;
         }
-        setTimeout(() => setToastMessage(null), 3500);
-        return; // Return immediately to prevent double local completion!
       }
     } catch (err) {
       console.warn('[Gamification] Remote completion fallback to local storage:', err);
     }
 
-    // 2. Client-side local storage fallback ONLY on network/offline fallback
+    // 2. Client-side local storage fallback
     const result = completeQuest(questId, user?.id);
     setGamification(result.state);
 
@@ -306,49 +296,6 @@ export const HomePage: React.FC = () => {
       );
       setTimeout(() => setToastMessage(null), 3500);
     }
-  };
-
-  const handleSwapQuest = async (questId: string) => {
-    try {
-      const res = await api.swapQuest(questId);
-      if (res && res.state) {
-        const s = res.state;
-        const mappedState: GamificationState = {
-          level: s.level,
-          levelTitle: s.level_title,
-          currentXp: s.current_xp,
-          xpForNextLevel: s.xp_for_next_level,
-          totalXpEarned: s.total_xp_earned,
-          streakDays: s.streak_days,
-          quests: s.quests.map((q: any) => ({
-            id: q.id,
-            title: q.title,
-            description: q.description,
-            xpReward: q.xp_reward,
-            category: q.category as any,
-            assetKey: q.asset_key || 'quest-kinetic-spark',
-            completed: q.completed,
-            completedAt: q.completed_at,
-            actionLabel: q.action_label,
-            actionRoute: q.action_route,
-          })),
-          achievements: s.achievements || [],
-          lastActiveDate: s.last_active_date,
-        };
-        setGamification(mappedState);
-        saveGamificationState(mappedState, user?.id);
-        setToastMessage("🌿 Gentle alternative quest ready—no guilt, no XP lost!");
-        setTimeout(() => setToastMessage(null), 3500);
-        return;
-      }
-    } catch (err) {
-      console.warn('[Gamification] Remote swap fallback to local storage:', err);
-    }
-
-    const resLocal = swapQuestLocal(questId, user?.id);
-    setGamification(resLocal.state);
-    setToastMessage("🌿 Gentle alternative quest ready—no guilt, no XP lost!");
-    setTimeout(() => setToastMessage(null), 3500);
   };
 
   const handleAddWater = async (amount: number) => {
@@ -524,7 +471,6 @@ export const HomePage: React.FC = () => {
         gamification={gamification}
         completedQuestsCount={completedQuests.length}
         totalQuestsCount={gamification.quests.length}
-        onViewAchievements={() => setIsAchievementsModalOpen(true)}
       />
 
       {/* ─── SECTION C: DAILY QUESTS ────────────────────────────── */}
@@ -532,7 +478,6 @@ export const HomePage: React.FC = () => {
         quests={gamification.quests}
         onCompleteQuest={handleQuestCompleted}
         onOpenExercise={handleOpenExercise}
-        onSwapQuest={handleSwapQuest}
       />
 
       {/* ─── SECTION D: 20-SECOND WELLNESS PULSE ─────────────────── */}
@@ -584,13 +529,7 @@ export const HomePage: React.FC = () => {
           </Card>
 
           {/* 2. Today's Recommended Workout Card */}
-          <div className="md:col-span-8 space-y-2">
-            {recommendation?.personalization_reason && (
-              <div className="px-3.5 py-2 rounded-2xl bg-blush-50/70 dark:bg-rose-950/30 border border-blush-200/60 dark:border-rose-900/40 text-xs text-plum-700 dark:text-rose-200 flex items-center gap-2">
-                <Sparkles className="w-3.5 h-3.5 text-blush-600 dark:text-rose-400 shrink-0" />
-                <span className="font-medium">{recommendation.personalization_reason}</span>
-              </div>
-            )}
+          <div className="md:col-span-8">
             {recommendation ? (
               <WorkoutCard
                 workout={recommendation.workout}
@@ -651,13 +590,6 @@ export const HomePage: React.FC = () => {
         isOpen={isPeriodLoggerOpen}
         onClose={() => setIsPeriodLoggerOpen(false)}
         onSuccess={loadDashboardData}
-      />
-
-      {/* Achievements & Badges Modal (Stage 6) */}
-      <AchievementsModal
-        isOpen={isAchievementsModalOpen}
-        onClose={() => setIsAchievementsModalOpen(false)}
-        achievements={gamification.achievements}
       />
 
       {/* Meal Substitution Modal */}

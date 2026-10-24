@@ -340,7 +340,7 @@ func main() {
 		}
 	})))
 
-	// Gamification Endpoints (Stage 5 & Stage 6)
+	// Gamification Endpoints (Stage 5)
 	mux.Handle("/api/v1/gamification", authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
 			gamificationHandler.GetGamification(w, r)
@@ -350,11 +350,7 @@ func main() {
 	})))
 	mux.Handle("/api/v1/gamification/quests/", authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
-			if strings.HasSuffix(r.URL.Path, "/swap") || strings.HasSuffix(r.URL.Path, "/skip") {
-				gamificationHandler.SwapQuest(w, r)
-			} else {
-				gamificationHandler.CompleteQuest(w, r)
-			}
+			gamificationHandler.CompleteQuest(w, r)
 		} else {
 			models.RespondError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "Method not allowed")
 		}

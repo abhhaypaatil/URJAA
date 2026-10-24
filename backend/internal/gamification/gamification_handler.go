@@ -321,7 +321,6 @@ func (h *Handler) GetGamification(w http.ResponseWriter, r *http.Request) {
 		state.XPForNextLevel = nextXP
 		state.Quests = h.generatePersonalizedQuests(userID, today)
 		state.LastActiveDate = today
-		state.Achievements = h.evaluateAchievements(userID, state)
 	} else {
 		// Ensure quests reflect current completion status
 		for _, q := range state.Quests {
@@ -329,151 +328,9 @@ func (h *Handler) GetGamification(w http.ResponseWriter, r *http.Request) {
 				q.Completed = true
 			}
 		}
-		state.Achievements = h.evaluateAchievements(userID, state)
 	}
 
 	models.RespondJSON(w, http.StatusOK, state)
-}
-
-// POST /api/v1/gamification/quests/{id}/swap
-func (h *Handler) SwapQuest(w http.ResponseWriter, r *http.Request) {
-	userID, ok := middleware.GetUserID(r.Context())
-	if !ok {
-		models.RespondError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Not authorized")
-		return
-	}
-
-	pathParts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
-	var questID string
-	for i, part := range pathParts {
-		if part == "quests" && i+1 < len(pathParts) {
-			questID = pathParts[i+1]
-			break
-		}
-	}
-
-	if questID == "" {
-		models.RespondError(w, http.StatusBadRequest, "BAD_REQUEST", "Quest ID required")
-		return
-	}
-
-	today := time.Now().Format("2006-01-02")
-	state := h.DB.Storage.GamificationStates[userID]
-	if state == nil {
-		lvl, title, curXP, nextXP := CalculateLevel(0)
-		state = &models.GamificationState{
-			UserID:         userID,
-			Level:          lvl,
-			LevelTitle:     title,
-			CurrentXP:      curXP,
-			XPForNextLevel: nextXP,
-			TotalXPEarned:  0,
-			StreakDays:     1,
-			Quests:         h.generatePersonalizedQuests(userID, today),
-			LastActiveDate: today,
-		}
-		h.DB.Storage.GamificationStates[userID] = state
-	}
-
-	// Cannot swap an already completed quest
-	completionKey := today + "_" + questID
-	if h.DB.Storage.QuestCompletions[userID] != nil && h.DB.Storage.QuestCompletions[userID][completionKey] {
-		models.RespondError(w, http.StatusBadRequest, "ALREADY_COMPLETED", "Cannot replace an already completed quest")
-		return
-	}
-
-	// Generate gentle alternative for this quest without guilt or loss of previously earned XP
-	var replacement *models.Quest
-	switch questID {
-	case "quest-movement":
-		replacement = &models.Quest{
-			ID:          "quest-movement-alt",
-			Title:       "Gentle 5-Minute Pelvic & Spine Release",
-			Description: "A soothing, zero-sweat cat-cow and child's pose sequence to restore your body.",
-			Category:    "flexibility",
-			Difficulty:  "Gentle",
-			DurationMin: 5,
-			XPReward:    60,
-			Completed:   false,
-			ActionLabel: "View Gentle Demo",
-			ActionRoute: "/workout",
-			ExerciseID:  "22222222-0000-0000-0000-000000000042",
-			AssetKey:    "quest-kinetic-spark",
-		}
-	case "quest-hydration":
-		replacement = &models.Quest{
-			ID:          "quest-hydration-alt",
-			Title:       "Warm Digestive Herbal Infusion",
-			Description: "Sip a soothing cup of ginger, chamomile, or warm lemon water.",
-			Category:    "hydration",
-			Difficulty:  "Gentle",
-			DurationMin: 3,
-			XPReward:    40,
-			Completed:   false,
-			ActionLabel: "Log Herbal Sip",
-			ActionRoute: "/check-in",
-			AssetKey:    "quest-hydration-glow",
-		}
-	case "quest-nourish":
-		replacement = &models.Quest{
-			ID:          "quest-nourish-alt",
-			Title:       "Mindful Hydrating Snack & Digestive Rest",
-			Description: "Enjoy roasted makhana, juicy fruit, or a 1-tap clean meal alternative.",
-			Category:    "nutrition",
-			Difficulty:  "Gentle",
-			DurationMin: 3,
-			XPReward:    50,
-			Completed:   false,
-			ActionLabel: "View Options",
-			ActionRoute: "/nutrition",
-			MealID:      "44444444-0000-0000-0000-000000000008",
-			AssetKey:    "quest-alchemy-plate",
-		}
-	case "quest-evening":
-		replacement = &models.Quest{
-			ID:          "quest-evening-alt",
-			Title:       "2-Minute Nervous System Decompression",
-			Description: "Inhale for 4 seconds, hold gently for 4, and lengthen your exhale for 6.",
-			Category:    "mindfulness",
-			Difficulty:  "Gentle",
-			DurationMin: 2,
-			XPReward:    50,
-			Completed:   false,
-			ActionLabel: "Center Yourself",
-			ActionRoute: "/companion",
-			AssetKey:    "quest-evening-unwind",
-		}
-	default:
-		replacement = &models.Quest{
-			ID:          questID + "-alt",
-			Title:       "Gentle Breath & Mindful Pause",
-			Description: "Take a compassionate moment to pause, hydrate, and relax your shoulders.",
-			Category:    "mindfulness",
-			Difficulty:  "Gentle",
-			DurationMin: 2,
-			XPReward:    40,
-			Completed:   false,
-			ActionLabel: "Take Pause",
-			ActionRoute: "/home",
-			AssetKey:    "quest-evening-unwind",
-		}
-	}
-
-	// Replace in state.Quests
-	for i, q := range state.Quests {
-		if q.ID == questID {
-			state.Quests[i] = replacement
-			break
-		}
-	}
-
-	state.Achievements = h.evaluateAchievements(userID, state)
-
-	models.RespondJSON(w, http.StatusOK, map[string]interface{}{
-		"message":     "Alternative quest provided without guilt or penalty",
-		"replacement": replacement,
-		"state":       state,
-	})
 }
 
 // POST /api/v1/gamification/quests/{id}/complete
@@ -524,7 +381,6 @@ func (h *Handler) CompleteQuest(w http.ResponseWriter, r *http.Request) {
 
 	// Idempotent check: prevent double-rewarding XP
 	if h.DB.Storage.QuestCompletions[userID][completionKey] {
-		state.Achievements = h.evaluateAchievements(userID, state)
 		models.RespondJSON(w, http.StatusOK, map[string]interface{}{
 			"state":      state,
 			"earned_xp":  0,
@@ -559,7 +415,6 @@ func (h *Handler) CompleteQuest(w http.ResponseWriter, r *http.Request) {
 	state.LastActiveDate = today
 
 	h.DB.Storage.QuestCompletions[userID][completionKey] = true
-	state.Achievements = h.evaluateAchievements(userID, state)
 
 	leveledUp := newLevel > oldLevel
 

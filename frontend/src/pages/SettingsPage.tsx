@@ -95,20 +95,6 @@ export const SettingsPage: React.FC = () => {
     }
   };
 
-  const handleClearPersonalization = async () => {
-    setIsClearing(true);
-    try {
-      await api.clearPersonalization();
-      await refreshUserData();
-      setClearSuccess(true);
-      setTimeout(() => setClearSuccess(false), 3000);
-    } catch (err) {
-      console.error('Failed to clear personalization', err);
-    } finally {
-      setIsClearing(false);
-    }
-  };
-
   const nameSuggestions = ['Aura', 'Mira', 'Nova', 'Sol', 'Lyra', 'Zephyr'];
 
   return (
@@ -156,113 +142,145 @@ export const SettingsPage: React.FC = () => {
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-plum-900 dark:text-slate-300 mb-1.5">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-plum-600 dark:text-slate-400 mb-1.5">
             Companion Name
           </label>
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={companionName}
-              onChange={(e) => setCompanionName(e.target.value)}
-              placeholder="e.g. Aura"
-              className="flex-1 px-4 py-2 text-sm rounded-xl border border-plum-200 dark:border-slate-700 bg-warm-50/50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-urjaa-rose text-plum-950 dark:text-white"
-            />
-          </div>
-
-          <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-            <span className="text-[11px] text-plum-500 dark:text-slate-400 mr-1">Suggestions:</span>
-            {nameSuggestions.map((name) => (
+          <input
+            type="text"
+            value={companionName}
+            onChange={(e) => setCompanionName(e.target.value)}
+            placeholder="e.g. Aura"
+            maxLength={24}
+            className="w-full px-3.5 py-2.5 rounded-xl bg-urjaa-ivory/60 dark:bg-slate-800 border border-plum-200 dark:border-slate-700 text-sm text-plum-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-urjaa-rose"
+          />
+          <div className="flex items-center gap-1.5 mt-2">
+            <span className="text-[10px] text-plum-500">Quick options:</span>
+            {nameSuggestions.map((opt) => (
               <button
-                key={name}
+                key={opt}
                 type="button"
-                onClick={() => setCompanionName(name)}
-                className={`text-[11px] px-2.5 py-0.5 rounded-lg border transition-colors ${
-                  companionName === name
-                    ? 'bg-urjaa-rose text-white border-urjaa-rose'
-                    : 'bg-ivory-100 dark:bg-slate-800 text-plum-700 dark:text-slate-300 border-plum-200 dark:border-slate-700 hover:border-urjaa-rose'
+                onClick={() => setCompanionName(opt)}
+                className={`text-[10px] px-2 py-0.5 rounded-lg border transition-all ${
+                  companionName === opt
+                    ? 'bg-urjaa-lavender text-urjaa-plum border-urjaa-lavender font-bold'
+                    : 'bg-white dark:bg-slate-800 text-plum-600 border-plum-100'
                 }`}
               >
-                {name}
+                {opt}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-plum-600 dark:text-slate-400 mb-1.5">
+            Supportive Tone
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            {['Gentle & Nurturing', 'Mindful & Grounded', 'Direct & Motivating'].map((tone) => (
+              <button
+                key={tone}
+                type="button"
+                onClick={() => setCompanionTone(tone)}
+                className={`py-2 px-1 rounded-xl text-xs font-semibold border text-center transition-all ${
+                  companionTone === tone
+                    ? 'border-urjaa-lavender bg-urjaa-lavender/40 text-urjaa-plum shadow-subtle'
+                    : 'border-plum-100 dark:border-slate-800 bg-white dark:bg-slate-800 text-plum-600'
+                }`}
+              >
+                {tone}
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* 2. Theme & Appearance Preference */}
-      <div className="rounded-3xl border border-plum-100/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-soft space-y-3">
-        <h3 className="font-serif font-bold text-base text-plum-950 dark:text-white">
+      {/* 2. Theme Selection */}
+      <div className="rounded-3xl border border-plum-100/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-soft">
+        <label className="block text-xs font-semibold uppercase tracking-wider text-plum-600 dark:text-slate-400 mb-3">
           Appearance & Theme
-        </h3>
-        <p className="text-xs text-plum-600 dark:text-slate-400">
-          Select your preferred celestial visual mode.
-        </p>
-
-        <div className="grid grid-cols-2 gap-3 pt-1">
-          <button
-            type="button"
-            onClick={() => setTheme('light')}
-            className={`p-3.5 rounded-2xl border flex items-center justify-center gap-2 text-xs font-semibold transition-all ${
-              theme === 'light'
-                ? 'border-urjaa-rose bg-blush-50/60 dark:bg-slate-800 text-urjaa-plum shadow-soft'
-                : 'border-plum-200/80 dark:border-slate-700 hover:border-urjaa-rose/60 text-plum-700 dark:text-slate-300'
-            }`}
-          >
-            <Sun className="w-4 h-4 text-amber-500" />
-            <span>Dawn Light</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setTheme('dark')}
-            className={`p-3.5 rounded-2xl border flex items-center justify-center gap-2 text-xs font-semibold transition-all ${
-              theme === 'dark'
-                ? 'border-urjaa-rose bg-slate-900 text-white shadow-soft ring-1 ring-urjaa-rose'
-                : 'border-plum-200/80 dark:border-slate-700 hover:border-urjaa-rose/60 text-plum-700 dark:text-slate-300'
-            }`}
-          >
-            <Moon className="w-4 h-4 text-urjaa-rose" />
-            <span>Cosmic Night</span>
-          </button>
+        </label>
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { id: 'light', label: 'Light Mode', icon: Sun },
+            { id: 'dark', label: 'Dark Mode', icon: Moon },
+            { id: 'system', label: 'System Default', icon: Sparkles },
+          ].map((t) => {
+            const Icon = t.icon;
+            return (
+              <button
+                key={name}
+                type="button"
+                onClick={() => setTheme(t.id as any)}
+                className={`py-3 px-3 rounded-2xl text-xs font-semibold flex flex-col items-center gap-2 transition-all ${
+                  theme === t.id
+                    ? 'border-urjaa-rose bg-urjaa-blush/40 text-plum-950 dark:border-rose-500 dark:bg-rose-600 dark:text-white shadow-subtle'
+                    : 'border-plum-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-plum-600 dark:text-slate-400 hover:border-plum-300'
+                }`}
+              >
+                <Icon className="w-4 h-4 text-urjaa-rose" />
+                <span>{t.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* 3. PCOS / PCOD Accommodations Mode */}
-      <div className="rounded-3xl border border-plum-100/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-soft flex items-center justify-between">
-        <div className="pr-4">
-          <div className="flex items-center gap-2">
-            <h3 className="font-serif font-bold text-sm text-plum-950 dark:text-white">
-              PCOS / PCOD Accommodations Mode
-            </h3>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-pistachio-100 text-pistachio-800 dark:bg-emerald-950 dark:text-emerald-300">
-              Gentle Pacing
-            </span>
+      {/* 3. PCOS / PCOD Mode */}
+      <div className="rounded-3xl border border-plum-100/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-soft">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-plum-950 dark:text-white">PCOS / PCOD Support Mode</span>
+              <span className="px-2 py-0.5 rounded-full bg-urjaa-blush text-[10px] text-urjaa-plum font-semibold">
+                Gentle Protocol
+              </span>
+            </div>
+            <p className="text-xs text-plum-600 dark:text-slate-400 mt-1 leading-relaxed">
+              Prioritizes low-cortisol exercise formats, steady resistance training, and low-glycemic, anti-inflammatory meal choices.
+            </p>
+          </div>
+
+          <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+            <input
+              type="checkbox"
+              checked={pcosMode}
+              onChange={(e) => setPcosMode(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-plum-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-plum-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-urjaa-rose" />
+          </label>
+        </div>
+      </div>
+
+      {/* 4. Quiet Friendly Workouts */}
+      <div className="rounded-3xl border border-plum-100/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-soft">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-plum-950 dark:text-white">Quiet Mode Default</span>
+              <span className="px-2 py-0.5 rounded-full bg-urjaa-skyblue/50 text-[10px] text-plum-900 font-semibold">
+                No Jumping
+              </span>
+            </div>
+            <p className="text-xs text-plum-600 dark:text-slate-400 mt-1 leading-relaxed">
+              Automatically selects exercises without jumping or loud floor impacts, ideal for apartments or late-evening workouts.
+            </p>
           </div>
           <p className="text-xs text-plum-600 dark:text-slate-400 mt-1 leading-relaxed">
             Adapts workouts to low-cortisol steady sessions, prioritizes low-glycemic Indian meals, and softens prediction confidence.
           </p>
         </div>
 
-        <label className="relative inline-flex items-center cursor-pointer shrink-0">
-          <input
-            type="checkbox"
-            checked={pcosMode}
-            onChange={(e) => setPcosMode(e.target.checked)}
-            className="sr-only peer"
-          />
-          <div className="w-11 h-6 bg-plum-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-plum-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-urjaa-rose" />
-        </label>
-      </div>
-
-      {/* 4. Quiet Mode (No Jumping / Apartments) */}
-      <div className="rounded-3xl border border-plum-100/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-soft flex items-center justify-between">
-        <div className="pr-4">
-          <h3 className="font-serif font-bold text-sm text-plum-950 dark:text-white">
-            Quiet Home Mode (Zero Jumping)
-          </h3>
-          <p className="text-xs text-plum-600 dark:text-slate-400 mt-1 leading-relaxed">
-            Replaces jumping jacks and high-impact cardio with silent, knee-friendly grounding movements for apartments.
-          </p>
+          <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+            <input
+              type="checkbox"
+              checked={quietMode}
+              onChange={(e) => setQuietMode(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-plum-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-plum-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-urjaa-rose" />
+          </label>
         </div>
 
         <label className="relative inline-flex items-center cursor-pointer shrink-0">

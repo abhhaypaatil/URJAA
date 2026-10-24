@@ -8,8 +8,6 @@
  * - Synchronized per user with local storage persistence
  */
 
-import { Achievement } from '../types';
-
 export interface Quest {
   id: string;
   title: string;
@@ -31,82 +29,8 @@ export interface GamificationState {
   totalXpEarned: number;
   streakDays: number;
   quests: Quest[];
-  achievements?: Achievement[];
   lastActiveDate: string;
 }
-
-export const DEFAULT_ACHIEVEMENTS: Achievement[] = [
-  {
-    id: 'ach-first-quest',
-    title: 'First Quest Completed',
-    description: 'Complete your very first daily wellness quest.',
-    category: 'quest',
-    icon: 'Sparkles',
-    unlocked: false,
-    progress: 0,
-    max_progress: 1,
-  },
-  {
-    id: 'ach-movement-explorer',
-    title: 'Movement Explorer',
-    description: 'Complete a guided movement session or movement quest.',
-    category: 'movement',
-    icon: 'Activity',
-    unlocked: false,
-    progress: 0,
-    max_progress: 1,
-  },
-  {
-    id: 'ach-mindful-moments',
-    title: 'Mindful Moments',
-    description: 'Complete a restorative evening pulse or mindful check-in.',
-    category: 'mindfulness',
-    icon: 'Heart',
-    unlocked: false,
-    progress: 0,
-    max_progress: 1,
-  },
-  {
-    id: 'ach-strength-builder',
-    title: 'Strength Builder',
-    description: 'Embrace progressive bodyweight strength for sustained vitality.',
-    category: 'strength',
-    icon: 'Dumbbell',
-    unlocked: false,
-    progress: 0,
-    max_progress: 1,
-  },
-  {
-    id: 'ach-consistency-milestone',
-    title: 'Consistency Milestone',
-    description: 'Nurture your wellness journey with 3 logged days.',
-    category: 'consistency',
-    icon: 'Flame',
-    unlocked: false,
-    progress: 1,
-    max_progress: 3,
-  },
-  {
-    id: 'ach-wellness-explorer',
-    title: 'Wellness Explorer',
-    description: 'Explore and complete quests across 3 different wellness realms.',
-    category: 'quest',
-    icon: 'Compass',
-    unlocked: false,
-    progress: 0,
-    max_progress: 3,
-  },
-  {
-    id: 'ach-personal-progress',
-    title: 'Personal Progress Milestone',
-    description: 'Advance to Level 2 (Mindful Bloom) through gentle momentum.',
-    category: 'level',
-    icon: 'Award',
-    unlocked: false,
-    progress: 1,
-    max_progress: 2,
-  },
-];
 
 const STORAGE_PREFIX = 'urjaa_wellness_gamification_';
 
@@ -225,7 +149,6 @@ export const getGamificationState = (userId?: string): GamificationState => {
     totalXpEarned: 0,
     streakDays: 1,
     quests: DEFAULT_DAILY_QUESTS,
-    achievements: DEFAULT_ACHIEVEMENTS,
     lastActiveDate: today,
   };
 
@@ -243,48 +166,6 @@ export const saveGamificationState = (state: GamificationState, userId?: string)
   } catch (e) {
     console.warn('[Gamification] Failed to persist state:', e);
   }
-};
-
-/**
- * Swaps an incomplete quest for a gentle alternative (offline fallback)
- */
-export const swapQuestLocal = (
-  questId: string,
-  userId?: string
-): { state: GamificationState; replacement?: Quest } => {
-  const current = getGamificationState(userId);
-  const quest = current.quests.find((q) => q.id === questId);
-
-  if (!quest || quest.completed) {
-    return { state: current };
-  }
-
-  const replacement: Quest = {
-    id: `${questId}-alt`,
-    title: quest.category === 'movement' 
-      ? 'Gentle 5-Minute Pelvic & Spine Release' 
-      : quest.category === 'hydration' 
-      ? 'Warm Digestive Herbal Infusion'
-      : quest.category === 'nutrition'
-      ? 'Mindful Hydrating Snack & Digestive Rest'
-      : '2-Minute Nervous System Decompression',
-    description: 'A compassionate, restorative alternative that nurtures your body without pressure.',
-    xpReward: quest.xpReward,
-    category: quest.category,
-    assetKey: quest.assetKey,
-    completed: false,
-    actionLabel: 'Explore Alternative',
-    actionRoute: quest.actionRoute,
-  };
-
-  const updatedQuests = current.quests.map((q) => (q.id === questId ? replacement : q));
-  const updatedState: GamificationState = {
-    ...current,
-    quests: updatedQuests,
-  };
-
-  saveGamificationState(updatedState, userId);
-  return { state: updatedState, replacement };
 };
 
 /**

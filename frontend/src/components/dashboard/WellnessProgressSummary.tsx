@@ -8,21 +8,17 @@ interface WellnessProgressSummaryProps {
   gamification: GamificationState;
   completedQuestsCount: number;
   totalQuestsCount: number;
-  onViewAchievements?: () => void;
 }
 
 export const WellnessProgressSummary: React.FC<WellnessProgressSummaryProps> = ({
   gamification,
   completedQuestsCount,
   totalQuestsCount,
-  onViewAchievements,
 }) => {
   const progressPercent = Math.min(
     100,
     Math.round((gamification.currentXp / gamification.xpForNextLevel) * 100)
   );
-
-  const unlockedCount = gamification.achievements?.filter((a) => a.unlocked).length || 0;
 
   return (
     <Card
@@ -52,24 +48,12 @@ export const WellnessProgressSummary: React.FC<WellnessProgressSummaryProps> = (
           </div>
         </div>
 
-        {/* Streak, Badges & Quests Pill */}
-        <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
+        {/* Streak & Consistency Pill */}
+        <div className="flex items-center gap-2 self-start md:self-auto">
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-pistachio-50 dark:bg-emerald-950/40 border border-pistachio-200/80 dark:border-emerald-900/60 text-xs font-semibold text-pistachio-900 dark:text-emerald-200">
             <Flame className="w-4 h-4 text-pistachio-600 dark:text-emerald-400 fill-current" />
             <span>{gamification.streakDays} Day Rhythm</span>
           </div>
-
-          {onViewAchievements && (
-            <button
-              type="button"
-              onClick={onViewAchievements}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-blush-50 dark:bg-rose-950/40 border border-blush-200/80 dark:border-rose-900/60 text-xs font-semibold text-blush-900 dark:text-rose-200 hover:bg-blush-100 transition-colors shadow-xs"
-              title="View all earned achievements and milestones"
-            >
-              <Award className="w-4 h-4 text-blush-600 dark:text-rose-400" />
-              <span>{unlockedCount} Badges</span>
-            </button>
-          )}
 
           <Badge variant="blush" size="md">
             {completedQuestsCount} / {totalQuestsCount} Quests Today
