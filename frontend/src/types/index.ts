@@ -196,7 +196,20 @@ export interface DailyRecommendation {
   hydration_tip: string;
   recovery_note: string;
   is_pcos_adapted: boolean;
+  personalization_reason?: string;
   disclaimer: string;
+}
+
+export interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  icon: string;
+  unlocked: boolean;
+  unlocked_at?: string;
+  progress: number;
+  max_progress: number;
 }
 
 export interface WorkoutSession {

@@ -330,6 +330,27 @@ func (h *Handler) ExportData(w http.ResponseWriter, r *http.Request) {
 	models.RespondJSON(w, http.StatusOK, exportData)
 }
 
+// POST /api/v1/profile/clear-personalization
+func (h *Handler) ClearPersonalization(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		models.RespondError(w, http.StatusUnauthorized, "UNAUTHORIZED", "Not authorized")
+		return
+	}
+
+	// Reset profile to default gentle baseline while preserving user account, lifetime XP, and level
+	if profile := h.DB.Storage.Profiles[userID]; profile != nil {
+		profile.ExerciseLimitations = []string{}
+		profile.PreferredActivities = []string{}
+		profile.UpdatedAt = time.Now()
+	}
+
+	models.RespondJSON(w, http.StatusOK, map[string]interface{}{
+		"status":  "cleared",
+		"message": "Personalization history has been cleared. Baseline recommendations restored.",
+	})
+}
+
 // DELETE /api/v1/profile
 func (h *Handler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.GetUserID(r.Context())
@@ -345,6 +366,9 @@ func (h *Handler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
 	delete(h.DB.Storage.Cycles, userID)
 	delete(h.DB.Storage.Checkins, userID)
 	delete(h.DB.Storage.Sessions, userID)
+	delete(h.DB.Storage.GamificationStates, userID)
+	delete(h.DB.Storage.QuestCompletions, userID)
+	delete(h.DB.Storage.MealLogs, userID)
 
 	models.RespondJSON(w, http.StatusOK, map[string]interface{}{
 		"status":  "deleted",

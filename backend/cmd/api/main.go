@@ -151,6 +151,13 @@ func main() {
 			models.RespondError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "Method not allowed")
 		}
 	})))
+	mux.Handle("/api/v1/profile/clear-personalization", authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			usersHandler.ClearPersonalization(w, r)
+		} else {
+			models.RespondError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "Method not allowed")
+		}
+	})))
 
 	// Settings
 	mux.Handle("/api/v1/settings", authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

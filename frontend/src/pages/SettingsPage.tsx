@@ -11,6 +11,8 @@ import {
   Sparkles,
   Bot,
   CheckCircle2,
+  ShieldCheck,
+  RotateCcw,
 } from 'lucide-react';
 import { MEDICAL_DISCLAIMER } from '../constants';
 import { CompanionOrb } from '../components/companion/CompanionOrb';
@@ -39,6 +41,8 @@ export const SettingsPage: React.FC = () => {
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSaved, setIsSaved] = useState<boolean>(false);
+  const [isClearing, setIsClearing] = useState<boolean>(false);
+  const [clearSuccess, setClearSuccess] = useState<boolean>(false);
 
   useEffect(() => {
     if (preferences) {
@@ -205,7 +209,7 @@ export const SettingsPage: React.FC = () => {
             const Icon = t.icon;
             return (
               <button
-                key={t.id}
+                key={name}
                 type="button"
                 onClick={() => setTheme(t.id as any)}
                 className={`py-3 px-3 rounded-2xl text-xs font-semibold flex flex-col items-center gap-2 transition-all ${
@@ -217,8 +221,8 @@ export const SettingsPage: React.FC = () => {
                 <Icon className="w-4 h-4 text-urjaa-rose" />
                 <span>{t.label}</span>
               </button>
-            );
-          })}
+            ))}
+          </div>
         </div>
       </div>
 
@@ -263,6 +267,10 @@ export const SettingsPage: React.FC = () => {
               Automatically selects exercises without jumping or loud floor impacts, ideal for apartments or late-evening workouts.
             </p>
           </div>
+          <p className="text-xs text-plum-600 dark:text-slate-400 mt-1 leading-relaxed">
+            Adapts workouts to low-cortisol steady sessions, prioritizes low-glycemic Indian meals, and softens prediction confidence.
+          </p>
+        </div>
 
           <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
             <input
@@ -274,6 +282,16 @@ export const SettingsPage: React.FC = () => {
             <div className="w-11 h-6 bg-plum-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-plum-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-urjaa-rose" />
           </label>
         </div>
+
+        <label className="relative inline-flex items-center cursor-pointer shrink-0">
+          <input
+            type="checkbox"
+            checked={quietMode}
+            onChange={(e) => setQuietMode(e.target.checked)}
+            className="sr-only peer"
+          />
+          <div className="w-11 h-6 bg-plum-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-plum-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-urjaa-rose" />
+        </label>
       </div>
 
       {/* 5. Notification Preferences */}
@@ -301,6 +319,70 @@ export const SettingsPage: React.FC = () => {
             />
           </div>
         ))}
+      </div>
+
+      {/* 6. Consent-Based Personalization & Privacy Memory (Stage 6) */}
+      <div className="rounded-3xl border border-plum-100/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-soft space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-pistachio-100 dark:bg-emerald-950/60 flex items-center justify-center text-pistachio-700 dark:text-emerald-300">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="font-serif font-bold text-base text-plum-950 dark:text-white">
+                Personalization & Privacy Memory
+              </h3>
+              <p className="text-xs text-plum-600 dark:text-slate-400">
+                Transparent memory used to personalize workouts, Indian meals, and Aura guidance.
+              </p>
+            </div>
+          </div>
+          <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-pistachio-100 dark:bg-emerald-900/40 text-pistachio-800 dark:text-emerald-300">
+            Account-Scoped
+          </span>
+        </div>
+
+        {clearSuccess && (
+          <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <span>Personalization history cleared. Baseline recommendations restored without affecting your earned XP or levels.</span>
+          </div>
+        )}
+
+        <div className="p-4 rounded-2xl bg-ivory-50 dark:bg-slate-800/60 border border-plum-100/60 dark:border-slate-700/60 space-y-2 text-xs">
+          <div className="flex justify-between py-1 border-b border-plum-100/40 dark:border-slate-700/40">
+            <span className="text-plum-600 dark:text-slate-400">Primary Goal:</span>
+            <span className="font-semibold text-plum-950 dark:text-white">{profile?.primary_goal || profile?.wellness_goal || 'Build strength'}</span>
+          </div>
+          <div className="flex justify-between py-1 border-b border-plum-100/40 dark:border-slate-700/40">
+            <span className="text-plum-600 dark:text-slate-400">Experience & Duration:</span>
+            <span className="font-semibold text-plum-950 dark:text-white">{profile?.fitness_level || 'Beginner'} • {profile?.preferred_workout_duration || 15} min</span>
+          </div>
+          <div className="flex justify-between py-1 border-b border-plum-100/40 dark:border-slate-700/40">
+            <span className="text-plum-600 dark:text-slate-400">Nutrition Preference:</span>
+            <span className="font-semibold text-plum-950 dark:text-white">{profile?.dietary_preference || 'Vegetarian'}</span>
+          </div>
+          <div className="flex justify-between py-1">
+            <span className="text-plum-600 dark:text-slate-400">Privacy Guarantee:</span>
+            <span className="font-semibold text-emerald-700 dark:text-emerald-400">Never added to public AI models</span>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-1">
+          <p className="text-[11px] text-plum-500 dark:text-slate-400 max-w-sm">
+            You can clear recommendation memory anytime. Your profile and lifetime XP will remain intact.
+          </p>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleClearPersonalization}
+            disabled={isClearing}
+            className="text-xs text-rose-600 border-rose-200 hover:bg-rose-50 dark:border-rose-900/60"
+          >
+            <RotateCcw className="w-3 h-3 mr-1" />
+            <span>{isClearing ? 'Clearing...' : 'Clear History'}</span>
+          </Button>
+        </div>
       </div>
 
       {/* Save Button */}

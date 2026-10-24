@@ -71,6 +71,7 @@ export const HomePage: React.FC = () => {
 
   // Modals
   const [isPeriodLoggerOpen, setIsPeriodLoggerOpen] = useState<boolean>(false);
+  const [isAchievementsModalOpen, setIsAchievementsModalOpen] = useState<boolean>(false);
   const [substituteMeal, setSubstituteMeal] = useState<Meal | null>(null);
   const [isCompanionOpen, setIsCompanionOpen] = useState<boolean>(false);
   const [activeExerciseModal, setActiveExerciseModal] = useState<Exercise | null>(null);

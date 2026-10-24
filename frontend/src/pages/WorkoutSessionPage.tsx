@@ -52,6 +52,8 @@ export const WorkoutSessionPage: React.FC = () => {
         status: 'COMPLETED',
         completion_rate: 1.0,
       });
+      // Complete daily movement quest and award earned XP
+      await api.completeQuest('quest-movement').catch(() => null);
       navigate('/home');
     } catch (err) {
       console.error('Failed to complete session', err);

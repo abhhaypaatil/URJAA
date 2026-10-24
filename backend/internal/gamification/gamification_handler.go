@@ -159,6 +159,132 @@ func (h *Handler) generatePersonalizedQuests(userID string, date string) []*mode
 	}
 }
 
+func minInt(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func (h *Handler) evaluateAchievements(userID string, state *models.GamificationState) []*models.Achievement {
+	completions := h.DB.Storage.QuestCompletions[userID]
+	sessions := h.DB.Storage.Sessions[userID]
+	profile := h.DB.Storage.Profiles[userID]
+
+	completedQuestCount := 0
+	categoriesCompleted := make(map[string]bool)
+	movementCompleted := 0
+	mindfulnessCompleted := 0
+
+	if completions != nil {
+		for key, val := range completions {
+			if val {
+				completedQuestCount++
+				if strings.Contains(key, "quest-movement") {
+					movementCompleted++
+					categoriesCompleted["movement"] = true
+				}
+				if strings.Contains(key, "quest-hydration") {
+					categoriesCompleted["hydration"] = true
+				}
+				if strings.Contains(key, "quest-nourish") {
+					categoriesCompleted["nutrition"] = true
+				}
+				if strings.Contains(key, "quest-evening") {
+					mindfulnessCompleted++
+					categoriesCompleted["mindfulness"] = true
+				}
+			}
+		}
+	}
+
+	if sessions != nil {
+		for _, s := range sessions {
+			if s.Status == "COMPLETED" {
+				movementCompleted++
+				categoriesCompleted["movement"] = true
+			}
+		}
+	}
+
+	isStrengthGoal := profile != nil && strings.Contains(strings.ToLower(profile.PrimaryGoal+" "+profile.WellnessGoal), "strength")
+
+	achievements := []*models.Achievement{
+		{
+			ID:          "ach-first-quest",
+			Title:       "First Quest Completed",
+			Description: "Complete your very first daily wellness quest.",
+			Category:    "quest",
+			Icon:        "Sparkles",
+			Unlocked:    completedQuestCount >= 1,
+			Progress:    minInt(completedQuestCount, 1),
+			MaxProgress: 1,
+		},
+		{
+			ID:          "ach-movement-explorer",
+			Title:       "Movement Explorer",
+			Description: "Complete a guided movement session or movement quest.",
+			Category:    "movement",
+			Icon:        "Activity",
+			Unlocked:    movementCompleted >= 1,
+			Progress:    minInt(movementCompleted, 1),
+			MaxProgress: 1,
+		},
+		{
+			ID:          "ach-mindful-moments",
+			Title:       "Mindful Moments",
+			Description: "Complete a restorative evening pulse or mindful check-in.",
+			Category:    "mindfulness",
+			Icon:        "Heart",
+			Unlocked:    mindfulnessCompleted >= 1,
+			Progress:    minInt(mindfulnessCompleted, 1),
+			MaxProgress: 1,
+		},
+		{
+			ID:          "ach-strength-builder",
+			Title:       "Strength Builder",
+			Description: "Embrace progressive bodyweight strength for sustained vitality.",
+			Category:    "strength",
+			Icon:        "Dumbbell",
+			Unlocked:    isStrengthGoal || movementCompleted >= 1,
+			Progress:    1,
+			MaxProgress: 1,
+		},
+		{
+			ID:          "ach-consistency-milestone",
+			Title:       "Consistency Milestone",
+			Description: "Nurture your wellness journey with 3 logged days.",
+			Category:    "consistency",
+			Icon:        "Flame",
+			Unlocked:    state.StreakDays >= 3,
+			Progress:    minInt(state.StreakDays, 3),
+			MaxProgress: 3,
+		},
+		{
+			ID:          "ach-wellness-explorer",
+			Title:       "Wellness Explorer",
+			Description: "Explore and complete quests across 3 different wellness realms.",
+			Category:    "quest",
+			Icon:        "Compass",
+			Unlocked:    len(categoriesCompleted) >= 3,
+			Progress:    minInt(len(categoriesCompleted), 3),
+			MaxProgress: 3,
+		},
+		{
+			ID:          "ach-personal-progress",
+			Title:       "Personal Progress Milestone",
+			Description: "Advance to Level 2 (Mindful Bloom) through gentle, steady momentum.",
+			Category:    "level",
+			Icon:        "Award",
+			Unlocked:    state.Level >= 2,
+			Progress:    minInt(state.Level, 2),
+			MaxProgress: 2,
+		},
+	}
+
+	return achievements
+}
+
 // GET /api/v1/gamification
 func (h *Handler) GetGamification(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.GetUserID(r.Context())
@@ -184,6 +310,7 @@ func (h *Handler) GetGamification(w http.ResponseWriter, r *http.Request) {
 			Quests:         h.generatePersonalizedQuests(userID, today),
 			LastActiveDate: today,
 		}
+		state.Achievements = h.evaluateAchievements(userID, state)
 		h.DB.Storage.GamificationStates[userID] = state
 	} else if state.LastActiveDate != today {
 		// New day: refresh quests but strictly preserve lifetime XP and Level!
